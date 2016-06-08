@@ -74,7 +74,7 @@ func index(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotModified)
 	} else {
 		w.Header().Set("ETag", etagStr)
-		w.Header().Set("Cache-Control", "public")
+		w.Header().Set("Cache-Control", "max-age=60")
 		w.Header().Set("X-Tags", rTags[modValue])
 		w.Header().Set("X-Toomore", "I am Here")
 
