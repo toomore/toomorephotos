@@ -1,0 +1,39 @@
+body {
+    background-color: #000;
+}
+.wall a:hover img {
+  border: 1px #ccc solid;
+}
+.wall a img {
+  border: 1px #333 solid;
+}
+@media only screen and (max-width: 1280px) {
+    .wall img { width: 120px; height: 120px;}
+}
+@media only screen and (max-width: 1024px) {
+    .wall img { width: 120px; height: 120px;}
+}
+@media only screen and (max-width: 980px) {
+    .wall img { width: 132px; height: 132px;}
+}
+@media only screen and (max-width: 900px) {
+    .wall img { width: 141px; height: 141px;}
+}
+@media only screen and (max-width: 800px) {
+    .wall img { width: 106px; height: 106px;}
+}
+@media only screen and (max-width: 768px) {
+    .wall img { width: 98px; height: 98px;}
+}
+@media only screen and (max-width: 480px) {
+    .wall img { width: 110px; height: 110px;}
+}
+@media only screen and (max-width: 360px) {
+    .wall img { width: 80px; height: 80px;}
+}
+@media only screen and (max-width: 320px) {
+    .wall img { width: 95px; height: 95px;}
+}
+@media only screen and (min-width: 1281px) {
+    .wall img { width: 121px; height: 121px;}
+}
