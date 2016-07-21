@@ -14,17 +14,17 @@ import (
 )
 
 var (
-	f       *flickr.Flickr
-	rTags   [8]string
-	tpl     *template.Template
-	user_id string
+	f      *flickr.Flickr
+	rTags  [8]string
+	tpl    *template.Template
+	userID string
 )
 
 func init() {
 	tpl, _ = template.ParseFiles("./base.htm")
 	f = flickr.NewFlickr(os.Getenv("FLICKRAPIKEY"), os.Getenv("FLICKRSECRET"))
 	f.AuthToken = os.Getenv("FLICKRUSERTOKEN")
-	user_id = os.Getenv("FLICKRUSER")
+	userID = os.Getenv("FLICKRUSER")
 	rTags = [8]string{
 		"agfa,japan",
 		"blackandwhite",
@@ -46,7 +46,7 @@ func fromSearch(tags string) []jsonstruct.Photo {
 	args["tags"] = tags
 	args["tag_mode"] = "all"
 	args["sort"] = "date-posted-desc"
-	args["user_id"] = user_id
+	args["user_id"] = userID
 
 	searchResult := f.PhotosSearch(args)
 
