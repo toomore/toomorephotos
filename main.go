@@ -15,7 +15,7 @@ import (
 
 var (
 	f      *flickr.Flickr
-	rTags  [8]string
+	rTags  [10]string
 	tpl    *template.Template
 	userID string
 )
@@ -25,7 +25,7 @@ func init() {
 	f = flickr.NewFlickr(os.Getenv("FLICKRAPIKEY"), os.Getenv("FLICKRSECRET"))
 	f.AuthToken = os.Getenv("FLICKRUSERTOKEN")
 	userID = os.Getenv("FLICKRUSER")
-	rTags = [8]string{
+	rTags = [10]string{
 		"agfa,japan",
 		"blackandwhite",
 		"canon",
@@ -34,6 +34,8 @@ func init() {
 		"kyoto",
 		"lomo",
 		"tokyo",
+		"taiwan",
+		"EtoC",
 	}
 }
 
