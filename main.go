@@ -72,14 +72,14 @@ func index(w http.ResponseWriter, r *http.Request) {
 	modValue := int(math.Mod(float64(time.Now().Minute()), float64(len(rTags))))
 	etagStr := fmt.Sprintf("W/\"%d-%s\"", modValue, rTags[modValue])
 
+	w.Header().Set("X-Tags", rTags[modValue])
+	w.Header().Set("X-Github", "github.com/toomore/toomorephotos")
+
 	if r.Header.Get("If-None-Match") == etagStr {
 		w.WriteHeader(http.StatusNotModified)
 	} else {
 		w.Header().Set("ETag", etagStr)
 		w.Header().Set("Cache-Control", "max-age=60")
-		w.Header().Set("X-Tags", rTags[modValue])
-		w.Header().Set("X-Toomore", "I am Here")
-
 		tpl.Execute(w, fromSearch(rTags[modValue]))
 	}
 }
