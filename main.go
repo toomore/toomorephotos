@@ -40,7 +40,7 @@ func init() {
 }
 
 func logs(r *http.Request) {
-	log.Println(r.Header["X-Real-Ip"][0], r.Method, r.RequestURI, r.UserAgent())
+	log.Println(r.Header.Get("X-Real-Ip"), r.Method, r.RequestURI, r.UserAgent())
 }
 
 func fromSearch(tags string) []jsonstruct.Photo {
