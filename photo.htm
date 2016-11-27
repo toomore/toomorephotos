@@ -1,0 +1,19 @@
+{{define "content"}}
+    <div class="photo" style="text-align:center;">
+        <a href="//www.flickr.com/photos/toomore/{{.ID}}">
+            <img class="image"
+            alt="{{.Title.Content}} {{.Description.Content}} Photo by Toomore"
+            src="https://farm{{.Farm}}.staticflickr.com/{{.Server}}/{{.ID}}_{{.Secret}}_h.jpg">
+        </a>
+        <div class="desc">
+            <p>{{.Title.Content}}</p>
+            <p>{{.Description.Content | isHTML}}</p>
+        </div>
+        <div class="tag">
+            {{range .Tags.Tag }}#{{.Raw}} {{end}}
+        </div>
+        <div class="by">
+            <p>Photo by Toomore</p>
+        </div>
+    </div>
+{{end}}

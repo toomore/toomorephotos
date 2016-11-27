@@ -37,3 +37,21 @@ body {
 @media only screen and (min-width: 1281px) {
     .wall img { width: 121px; height: 121px;}
 }
+.photo img.image {width: 100%;}
+.photo div {
+    color: #fff;
+    font-size: 12px;
+}
+.photo div.desc {
+    font-size: 12px;
+}
+.photo div.by {
+    font-weight: bold;
+}
+.photo div.tag {
+    color: #aaa;
+}
+.photo div.desc a {
+    color: #f1f;
+    font-weight: bold;
+}
