@@ -12,3 +12,12 @@
         $(function() { $(".wall").find("img").unveil(300); });
     </script>
 {{end}}
+
+{{define "og" -}}
+    <meta property="og:title" content="Toomore Photos">
+    <meta property="og:description" content="From here to see what I see.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://photos.toomore.net/">
+    <meta property="og:image" content="https://toomore.net/img/IMG_9872_16x9.jpg">
+    <meta property="og:site_name" content="Toomore Photos">
+{{- end}}
