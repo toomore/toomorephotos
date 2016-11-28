@@ -19,6 +19,8 @@
 {{end}}
 
 {{define "og" -}}
+    <title>{{.Title.Content}} Toomore Photos</title>
+    <meta name="description" content="{{.Description.Content | isAltDesc}}">
     <meta property="og:title" content="{{.Title.Content}} Photo by Toomore">
     <meta property="og:description" content="{{.Description.Content | isAltDesc}}">
     <meta property="og:type" content="website">
