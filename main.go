@@ -27,14 +27,14 @@ var (
 func init() {
 	funcs := template.FuncMap{
 		"isHTML": func(content string) (template.HTML, error) {
-			return template.HTML(content), nil
+			return template.HTML(strings.Replace(content, "\n", "<br>", -1)), nil
+		},
+		"isAltDesc": func(content string) (string, error) {
+			return strings.Replace(content, "\n", " ", -1), nil
 		},
 	}
-	tplIndex, _ = template.ParseFiles("./base.htm")
-	tplIndex, _ = tplIndex.ParseFiles("./index.htm")
-	tplPhoto, _ = template.ParseFiles("./base.htm")
-	tplPhoto = tplPhoto.Funcs(funcs)
-	tplPhoto, _ = tplPhoto.ParseFiles("./photo.htm")
+	tplIndex, _ = template.Must(template.ParseFiles("./base.htm")).ParseFiles("./index.htm")
+	tplPhoto = template.Must(template.Must(template.ParseFiles("./base.htm")).Funcs(funcs).ParseFiles("./photo.htm"))
 
 	f = flickr.NewFlickr(os.Getenv("FLICKRAPIKEY"), os.Getenv("FLICKRSECRET"))
 	f.AuthToken = os.Getenv("FLICKRUSERTOKEN")
@@ -100,7 +100,6 @@ func index(w http.ResponseWriter, r *http.Request) {
 
 func photo(w http.ResponseWriter, r *http.Request) {
 	logs(r)
-	log.Println(r.RequestURI)
 	match := photoPageExpr.FindStringSubmatch(r.RequestURI)
 	var photono string
 	if len(match) >= 2 {
@@ -111,13 +110,11 @@ func photo(w http.ResponseWriter, r *http.Request) {
 	if photono != "" {
 		photoinfo = f.PhotosGetInfo(photono)
 		if photoinfo.Common.Stat == "ok" {
-			photoinfo.Photo.Description.Content = strings.Replace(photoinfo.Photo.Description.Content, "\n", "<br>", -1)
 			tplPhoto.Execute(w, photoinfo.Photo)
 		} else {
 			w.WriteHeader(http.StatusNotFound)
 		}
 	}
-	log.Printf("%+v", photoinfo)
 }
 
 func main() {

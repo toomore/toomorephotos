@@ -1,7 +1,14 @@
 {{define "content"}}
     <div class="wall" style="text-align:center;">
         {{range .}}
-        {{if .Ispublic}}<a href="/p/{{.ID}}-{{.Title}}"><img alt="{{.Title}} Photo by Toomore" data-src="https://farm{{.Farm}}.staticflickr.com/{{.Server}}/{{.ID}}_{{.Secret}}_q.jpg"></a>{{end}}
-        {{end}}
+        {{if .Ispublic}}<a href="/p/{{.ID}}-{{.Title}}"><img alt="{{.Title}} Photo by Toomore" data-src="https://farm{{.Farm}}.staticflickr.com/{{.Server}}/{{.ID}}_{{.Secret}}_q.jpg"></a>{{end}}{{end}}
     </div>
+{{end}}
+
+{{define "js"}}
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+    <script src="/jquery.unveil.min.js"></script>
+    <script defer="defer">
+        $(function() { $(".wall").find("img").unveil(300); });
+    </script>
 {{end}}

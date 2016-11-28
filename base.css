@@ -54,15 +54,25 @@ body {
 
 .photo div {
     color: #fff;
-    font-size: 12px;
+    font-size: 9pt;
 }
 .photo div.desc {
-    font-size: 12px;
     max-width: 600px;
     margin: auto;
+    line-height: 11pt;
+    overflow-wrap: break-word;
+}
+.photo div.desc h1 {
+    font-size: 8pt;
+    font-weight: bold;
+    font-style: italic;
+    text-align: right;
 }
 .photo div.by {
     font-weight: bold;
+}
+.photo div.by a {
+    color: #fff;
 }
 .photo div.tag {
     color: #aaa;
