@@ -105,14 +105,21 @@ func photo(w http.ResponseWriter, r *http.Request) {
 	if len(match) >= 2 {
 		photono = match[1]
 	}
+	etagStr := fmt.Sprintf("W/\"%s\"", photono)
 
-	var photoinfo jsonstruct.PhotosGetInfo
-	if photono != "" {
-		photoinfo = f.PhotosGetInfo(photono)
-		if photoinfo.Common.Stat == "ok" {
-			tplPhoto.Execute(w, photoinfo.Photo)
-		} else {
-			w.WriteHeader(http.StatusNotFound)
+	if r.Header.Get("If-None-Match") == etagStr {
+		w.WriteHeader(http.StatusNotModified)
+	} else {
+		var photoinfo jsonstruct.PhotosGetInfo
+		if photono != "" {
+			photoinfo = f.PhotosGetInfo(photono)
+			if photoinfo.Common.Stat == "ok" {
+				w.Header().Set("ETag", etagStr)
+				w.Header().Set("Cache-Control", "max-age=60")
+				tplPhoto.Execute(w, photoinfo.Photo)
+			} else {
+				w.WriteHeader(http.StatusNotFound)
+			}
 		}
 	}
 }
