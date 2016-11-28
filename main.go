@@ -124,9 +124,24 @@ func photo(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func sitemap(w http.ResponseWriter, r *http.Request) {
+	args := make(map[string]string)
+	args["sort"] = "date-posted-desc"
+	args["user_id"] = userID
+
+	searchResult := f.PhotosSearch(args)
+
+	var result []jsonstruct.Photo
+	for _, val := range searchResult {
+		result = append(result, val.Photos.Photo...)
+	}
+	template.Must(template.ParseFiles("./sitemap.htm")).Execute(w, result)
+}
+
 func main() {
 	http.HandleFunc("/", index)
 	http.HandleFunc("/p/", photo)
+	http.HandleFunc("/sitemap/", sitemap)
 	//http.Handle("/static", http.FileServer(http.Dir("./static/")))
 	serveSingle("/favicon.ico", "favicon.ico")
 	serveSingle("/jquery.unveil.min.js", "jquery.unveil.min.js")
