@@ -131,6 +131,5 @@ func main() {
 	serveSingle("/favicon.ico", "favicon.ico")
 	serveSingle("/jquery.unveil.min.js", "jquery.unveil.min.js")
 	serveSingle("/base_min.css", "base_min.css")
-	serveSingle("/base.css", "base.css")
-	log.Println(http.ListenAndServe(":8888", nil))
+	log.Println(http.ListenAndServe(":8080", nil))
 }
