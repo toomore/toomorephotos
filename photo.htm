@@ -1,0 +1,32 @@
+{{define "content"}}
+    <div class="photo" style="text-align:center;">
+        <a href="//www.flickr.com/photos/toomore/{{.ID}}">
+            <img class="image"
+            alt="{{.Title.Content}} {{.Description.Content | isAltDesc}} Photo by Toomore"
+            src="https://farm{{.Farm}}.staticflickr.com/{{.Server}}/{{.ID}}_{{.Secret}}_b.{{.Orgformat}}">
+        </a>
+        <div class="desc">
+            <h1>{{.Title.Content}}</h1>
+            <p>{{.Description.Content | isHTML}}</p>
+        </div>
+        <div class="tag">
+            {{range .Tags.Tag }}<span>#{{.Raw}}</span> {{end}}
+        </div>
+        <div class="by">
+            <p>Photo by <a href="//www.flickr.com/photos/toomore/{{.ID}}">Toomore</a></p>
+        </div>
+    </div>
+{{end}}
+
+{{define "og" -}}
+    <meta property="og:title" content="{{.Title.Content}} Photo by Toomore">
+    <meta property="og:description" content="{{.Description.Content | isAltDesc}}">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://photos.toomore.net/p/{{.ID}}-{{.Title.Content}}">
+    <meta property="og:image" content="https://farm{{.Farm}}.staticflickr.com/{{.Server}}/{{.ID}}_{{.Secret}}_h.{{.Orgformat}}">
+    <meta property="og:site_name" content="Toomore Photos">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="format-detection" content="date=no">
+    <meta name="format-detection" content="address=no">
+    <meta name="format-detection" content="email=no">
+{{- end}}

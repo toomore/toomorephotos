@@ -1,31 +1,24 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
 <html lang="zh_TW">
 <head>
+    {{block "head" . -}}
     <title>Toomore Photos</title>
     <meta name="description" content="From here to see what I see.">
-    <meta property="og:title" content="Toomore Photos">
-    <meta property="og:description" content="From here to see what I see.">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://photos.toomore.net/">
-    <meta property="og:image" content="https://toomore.net/img/IMG_9872_16x9.jpg">
-    <meta property="og:site_name" content="Toomore Photos">
+    {{block "og" . -}}{{- end}}
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:site" content="@toomore">
     <meta name="twitter:creator" content="@toomore">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#000000">
     <meta name="google-site-verification" content="XbQ1mcZP9G4KxSzJcN7eCLgB3z54nE8zSeJZGoj_9QE" />
-    <link rel="shortcut icon" href="favicon.ico">
-    <link rel="stylesheet" type="text/css" href="base_min.css">
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="stylesheet" type="text/css" href="/base_min.css">
     <link rel="dns-prefetch" href="//www.flickr.com/">
     <link rel="dns-prefetch" href="//ajax.googleapis.com/">
+{{- end}}
 </head>
 <body>
-    <div class="wall" style="text-align:center;">
-        {{range .}}
-        {{if .Ispublic}}<a href="//www.flickr.com/photos/toomore/{{.ID}}"><img alt="{{.Title}} Photo by Toomore" data-src="https://farm{{.Farm}}.staticflickr.com/{{.Server}}/{{.ID}}_{{.Secret}}_q.jpg"></a>{{end}}
-        {{end}}
-    </div>
+    {{block "content" .}}{{end}}
     <script>
       (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
       (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
@@ -36,10 +29,6 @@
       ga('send', 'pageview');
 
     </script>
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
-    <script src="jquery.unveil.min.js"></script>
-    <script defer="defer">
-        $(function() { $(".wall").find("img").unveil(300); });
-    </script>
+    {{block "js" .}}{{end}}
 </body>
 </html>

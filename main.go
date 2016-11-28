@@ -7,6 +7,8 @@ import (
 	"math"
 	"net/http"
 	"os"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/toomore/lazyflickrgo/flickr"
@@ -14,14 +16,26 @@ import (
 )
 
 var (
-	f      *flickr.Flickr
-	rTags  [10]string
-	tpl    *template.Template
-	userID string
+	f             *flickr.Flickr
+	rTags         [10]string
+	tplIndex      *template.Template
+	tplPhoto      *template.Template
+	userID        string
+	photoPageExpr = regexp.MustCompile(`/p/([0-9]+)-?(.+)?`)
 )
 
 func init() {
-	tpl, _ = template.ParseFiles("./base.htm")
+	funcs := template.FuncMap{
+		"isHTML": func(content string) (template.HTML, error) {
+			return template.HTML(strings.Replace(content, "\n", "<br>", -1)), nil
+		},
+		"isAltDesc": func(content string) (string, error) {
+			return strings.Replace(content, "\n", " ", -1), nil
+		},
+	}
+	tplIndex, _ = template.Must(template.ParseFiles("./base.htm")).ParseFiles("./index.htm")
+	tplPhoto = template.Must(template.Must(template.ParseFiles("./base.htm")).Funcs(funcs).ParseFiles("./photo.htm"))
+
 	f = flickr.NewFlickr(os.Getenv("FLICKRAPIKEY"), os.Getenv("FLICKRSECRET"))
 	f.AuthToken = os.Getenv("FLICKRUSERTOKEN")
 	userID = os.Getenv("FLICKRUSER")
@@ -80,12 +94,39 @@ func index(w http.ResponseWriter, r *http.Request) {
 	} else {
 		w.Header().Set("ETag", etagStr)
 		w.Header().Set("Cache-Control", "max-age=60")
-		tpl.Execute(w, fromSearch(rTags[modValue]))
+		tplIndex.Execute(w, fromSearch(rTags[modValue]))
+	}
+}
+
+func photo(w http.ResponseWriter, r *http.Request) {
+	logs(r)
+	match := photoPageExpr.FindStringSubmatch(r.RequestURI)
+	var photono string
+	if len(match) >= 2 {
+		photono = match[1]
+	}
+	etagStr := fmt.Sprintf("W/\"%s\"", photono)
+
+	if r.Header.Get("If-None-Match") == etagStr {
+		w.WriteHeader(http.StatusNotModified)
+	} else {
+		var photoinfo jsonstruct.PhotosGetInfo
+		if photono != "" {
+			photoinfo = f.PhotosGetInfo(photono)
+			if photoinfo.Common.Stat == "ok" {
+				w.Header().Set("ETag", etagStr)
+				w.Header().Set("Cache-Control", "max-age=60")
+				tplPhoto.Execute(w, photoinfo.Photo)
+			} else {
+				w.WriteHeader(http.StatusNotFound)
+			}
+		}
 	}
 }
 
 func main() {
 	http.HandleFunc("/", index)
+	http.HandleFunc("/p/", photo)
 	//http.Handle("/static", http.FileServer(http.Dir("./static/")))
 	serveSingle("/favicon.ico", "favicon.ico")
 	serveSingle("/jquery.unveil.min.js", "jquery.unveil.min.js")
