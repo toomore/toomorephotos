@@ -17,11 +17,11 @@ import (
 
 var (
 	f             *flickr.Flickr
-	rTags         [10]string
+	photoPageExpr = regexp.MustCompile(`/p/([0-9]+)-?(.+)?`)
+	rTags         [14]string
 	tplIndex      *template.Template
 	tplPhoto      *template.Template
 	userID        string
-	photoPageExpr = regexp.MustCompile(`/p/([0-9]+)-?(.+)?`)
 )
 
 func init() {
@@ -39,7 +39,7 @@ func init() {
 	f = flickr.NewFlickr(os.Getenv("FLICKRAPIKEY"), os.Getenv("FLICKRSECRET"))
 	f.AuthToken = os.Getenv("FLICKRUSERTOKEN")
 	userID = os.Getenv("FLICKRUSER")
-	rTags = [10]string{
+	rTags = [14]string{
 		"agfa,japan",
 		"blackandwhite",
 		"canon",
@@ -49,7 +49,11 @@ func init() {
 		"lomo",
 		"tokyo",
 		"taiwan",
+		"japan",
+		"moviefilms",
 		"EtoC",
+		"model",
+		"遺留給妳的文字與影像",
 	}
 }
 
@@ -93,7 +97,7 @@ func index(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotModified)
 	} else {
 		w.Header().Set("ETag", etagStr)
-		w.Header().Set("Cache-Control", "max-age=60")
+		w.Header().Set("Cache-Control", "max-age=120")
 		tplIndex.Execute(w, fromSearch(rTags[modValue]))
 	}
 }
@@ -115,7 +119,7 @@ func photo(w http.ResponseWriter, r *http.Request) {
 			photoinfo = f.PhotosGetInfo(photono)
 			if photoinfo.Common.Stat == "ok" {
 				w.Header().Set("ETag", etagStr)
-				w.Header().Set("Cache-Control", "max-age=60")
+				w.Header().Set("Cache-Control", "max-age=300")
 				tplPhoto.Execute(w, photoinfo.Photo)
 			} else {
 				w.WriteHeader(http.StatusNotFound)
