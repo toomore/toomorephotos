@@ -32,6 +32,13 @@ func init() {
 		"isAltDesc": func(content string) (string, error) {
 			return strings.Replace(content, "\n", " ", -1), nil
 		},
+		"toKeywords": func(data jsonstruct.Tags) (string, error) {
+			str := make([]string, len(data.Tag))
+			for i, tag := range data.Tag {
+				str[i] = tag.Raw
+			}
+			return strings.Join(str, ","), nil
+		},
 	}
 	tplIndex, _ = template.Must(template.ParseFiles("./base.htm")).ParseFiles("./index.htm")
 	tplPhoto = template.Must(template.Must(template.ParseFiles("./base.htm")).Funcs(funcs).ParseFiles("./photo.htm"))

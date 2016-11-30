@@ -33,3 +33,31 @@
     <meta name="format-detection" content="email=no">
     <link rel="canonical" href="https://photos.toomore.net/p/{{.ID}}-{{.Title.Content}}">
 {{- end}}
+
+{{define "jsonld" -}}
+<script type="application/ld+json">
+{
+    "@context": "http://schema.org/",
+    "@type": "Photograph",
+    "author": {
+        "@type": "Person",
+        "name": "Toomore Chiang",
+        "sameAs": "https://toomore.net/"
+    },
+    "copyrightHolder": {
+        "@type": "Person",
+        "name": "Toomore Chiang",
+        "sameAs": "https://toomore.net/"
+    },
+    "name": "{{.Title.Content}} Photo by Toomore",
+    "alternateName": "{{.Title.Content}} {{.ID}}",
+    "description": "{{.Description.Content | isAltDesc}}",
+    "image": "https://farm{{.Farm}}.staticflickr.com/{{.Server}}/{{.ID}}_{{.Secret}}_h.{{.Orgformat}}",
+    "thumbnailUrl": "https://farm{{.Farm}}.staticflickr.com/{{.Server}}/{{.ID}}_{{.Secret}}_h.{{.Orgformat}}",
+    "mainEntityOfPage": "https://www.flickr.com/photos/toomore/{{.ID}}",
+    "license": "https://www.flickr.com/photos/toomore/{{.ID}}",
+    "keywords": "{{.Tags | toKeywords}}",
+    "url": "https://photos.toomore.net/p/{{.ID}}"
+}
+</script>
+{{- end}}
