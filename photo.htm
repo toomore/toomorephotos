@@ -15,6 +15,7 @@
         <div class="by">
             <p>Photo by <a href="//www.flickr.com/photos/toomore/{{.ID}}">Toomore</a> / <a href="{{.License | licensesURL}}">{{.License | licensesName}}</a></p>
         </div>
+        <div><a href="//maps.google.com/?q={{.Location.Latitude}},{{.Location.Longitude}}"><img width="300" height="200" src="//maps.googleapis.com/maps/api/staticmap?size=300x200&center={{.Location.Latitude}},{{.Location.Longitude}}&key=AIzaSyBWnlG1YSHLvCL3075oxLvXXidrzH57tTY&zoom=16&scale=2&maptype=hybrid"></a></div>
         <div>
 			<!-- photos -->
 			<ins class="adsbygoogle"
@@ -40,6 +41,7 @@
     <meta name="format-detection" content="address=no">
     <meta name="format-detection" content="email=no">
     <link rel="canonical" href="https://photos.toomore.net/p/{{.ID}}-{{.Title.Content}}">
+    <link rel="copyright" href="{{.License | licensesURL}}">
 {{- end}}
 
 {{define "jsonld" -}}
@@ -57,14 +59,35 @@
         "name": "Toomore Chiang",
         "sameAs": "https://toomore.net/"
     },
+    "contentLocation": {
+        "@type": "Place",
+        "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": "{{.Location.Latitude}}",
+            "longitude": "{{.Location.Longitude}}"
+        }
+    },
+    "locationCreated": {
+        "@type": "Place",
+        "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": "{{.Location.Latitude}}",
+            "longitude": "{{.Location.Longitude}}"
+        }
+    },
     "name": "{{.Title.Content}} Photo by Toomore",
     "alternateName": "{{.Title.Content}} {{.ID}}",
     "description": "{{.Description.Content | isAltDesc}}",
     "image": "https://farm{{.Farm}}.staticflickr.com/{{.Server}}/{{.ID}}_{{.Secret}}_h.{{.Orgformat}}",
     "thumbnailUrl": "https://farm{{.Farm}}.staticflickr.com/{{.Server}}/{{.ID}}_{{.Secret}}_h.{{.Orgformat}}",
     "mainEntityOfPage": "https://www.flickr.com/photos/toomore/{{.ID}}",
+    "discussionUrl": "https://www.flickr.com/photos/toomore/{{.ID}}",
     "license": "{{.License | licensesURL}}",
     "keywords": "{{.Tags | toKeywords}}",
+    "dateCreated": "{{.Dates.Taken | iso8601}}",
+    "datePublished": "{{.Dates.Posted | iso8601}}",
+    "dateModified": "{{.Dates.Lastupdate | iso8601}}",
+    "fileFormat": "{{.Orgformat | fileFormat}}",
     "url": "https://photos.toomore.net/p/{{.ID}}"
 }
 </script>

@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -45,6 +46,20 @@ func init() {
 		},
 		"licensesURL": func(lno string) string {
 			return licenses[lno].URL
+		},
+		"iso8601": func(stamp string) string {
+			ts, err := time.Parse("2006-01-02 15:04:05", stamp)
+			if err == nil {
+				return ts.Format(time.RFC3339)
+			}
+			times, _ := strconv.Atoi(stamp)
+			return time.Unix(int64(times), 0).Format(time.RFC3339)
+		},
+		"fileFormat": func(format string) string {
+			if format == "png" {
+				return "image/png"
+			}
+			return "image/jpeg"
 		},
 	}
 	tplIndex, _ = template.Must(template.ParseFiles("./base.htm")).ParseFiles("./index.htm")
