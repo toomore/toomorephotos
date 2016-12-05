@@ -17,6 +17,7 @@ import (
 
 var (
 	f             *flickr.Flickr
+	licenses      map[string]jsonstruct.License
 	photoPageExpr = regexp.MustCompile(`/p/([0-9]+)-?(.+)?`)
 	rTags         [14]string
 	tplIndex      *template.Template
@@ -38,6 +39,12 @@ func init() {
 				str[i] = tag.Raw
 			}
 			return strings.Join(str, ","), nil
+		},
+		"licensesName": func(lno string) string {
+			return licenses[lno].Name
+		},
+		"licensesURL": func(lno string) string {
+			return licenses[lno].URL
 		},
 	}
 	tplIndex, _ = template.Must(template.ParseFiles("./base.htm")).ParseFiles("./index.htm")
@@ -62,6 +69,16 @@ func init() {
 		"model",
 		"遺留給妳的文字與影像",
 	}
+
+	log.Println("Init flickr licenses list ...")
+	licenses = make(map[string]jsonstruct.License)
+	for _, data := range f.PhotosLicensesGetInfo().Licenses.License {
+		if data.URL == "" {
+			data.URL = "https://toomore.net/"
+		}
+		licenses[data.ID] = data
+	}
+	log.Printf("Licenses: %+v", licenses)
 }
 
 func logs(r *http.Request) {

@@ -13,7 +13,7 @@
             {{range .Tags.Tag }}<span>#{{.Raw}}</span> {{end}}
         </div>
         <div class="by">
-            <p>Photo by <a href="//www.flickr.com/photos/toomore/{{.ID}}">Toomore</a></p>
+            <p>Photo by <a href="//www.flickr.com/photos/toomore/{{.ID}}">Toomore</a> / <a href="{{.License | licensesURL}}">{{.License | licensesName}}</a></p>
         </div>
         <div>
 			<!-- photos -->
@@ -63,7 +63,7 @@
     "image": "https://farm{{.Farm}}.staticflickr.com/{{.Server}}/{{.ID}}_{{.Secret}}_h.{{.Orgformat}}",
     "thumbnailUrl": "https://farm{{.Farm}}.staticflickr.com/{{.Server}}/{{.ID}}_{{.Secret}}_h.{{.Orgformat}}",
     "mainEntityOfPage": "https://www.flickr.com/photos/toomore/{{.ID}}",
-    "license": "https://www.flickr.com/photos/toomore/{{.ID}}",
+    "license": "{{.License | licensesURL}}",
     "keywords": "{{.Tags | toKeywords}}",
     "url": "https://photos.toomore.net/p/{{.ID}}"
 }
