@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"html/template"
 	"log"
@@ -18,6 +19,7 @@ import (
 
 var (
 	f             *flickr.Flickr
+	httpPort      = flag.String("p", ":8080", "HTTP port")
 	licenses      map[string]jsonstruct.License
 	photoPageExpr = regexp.MustCompile(`/p/([0-9]+)-?(.+)?`)
 	rTags         [14]string
@@ -182,6 +184,7 @@ func sitemap(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	flag.Parse()
 	http.HandleFunc("/", index)
 	http.HandleFunc("/p/", photo)
 	http.HandleFunc("/sitemap/", sitemap)
@@ -189,5 +192,6 @@ func main() {
 	serveSingle("/favicon.ico", "favicon.ico")
 	serveSingle("/jquery.unveil.min.js", "jquery.unveil.min.js")
 	serveSingle("/base_min.css", "base_min.css")
-	log.Println(http.ListenAndServe(":8080", nil))
+	log.Println("HTTP Port:", *httpPort)
+	log.Println(http.ListenAndServe(*httpPort, nil))
 }
