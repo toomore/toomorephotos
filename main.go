@@ -98,8 +98,8 @@ func init() {
 	log.Printf("Licenses: %+v", licenses)
 }
 
-func logs(r *http.Request) {
-	log.Println(r.Header.Get("X-Real-Ip"), r.Method, r.RequestURI, r.UserAgent())
+func logs(r *http.Request, note string) {
+	log.Println(r.Header.Get("X-Real-Ip"), r.Method, r.RequestURI, r.UserAgent(), note)
 }
 
 func fromSearch(tags string) []jsonstruct.Photo {
@@ -127,7 +127,7 @@ func serveSingle(pattern string, filename string) {
 }
 
 func index(w http.ResponseWriter, r *http.Request) {
-	logs(r)
+	logs(r, "")
 	modValue := int(math.Mod(float64(time.Now().Minute()), float64(len(rTags))))
 	etagStr := fmt.Sprintf("W/\"%d-%s\"", modValue, rTags[modValue])
 
@@ -144,7 +144,7 @@ func index(w http.ResponseWriter, r *http.Request) {
 }
 
 func photo(w http.ResponseWriter, r *http.Request) {
-	logs(r)
+	logs(r, "")
 	match := photoPageExpr.FindStringSubmatch(r.RequestURI)
 	var photono string
 	if len(match) >= 2 {
@@ -162,11 +162,10 @@ func photo(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("ETag", etagStr)
 				w.Header().Set("Cache-Control", "max-age=300")
 				tplPhoto.Execute(w, photoinfo.Photo)
-			} else {
-				w.WriteHeader(http.StatusNotFound)
 			}
 		}
 	}
+	notFound(w, r)
 }
 
 func sitemap(w http.ResponseWriter, r *http.Request) {
@@ -181,6 +180,12 @@ func sitemap(w http.ResponseWriter, r *http.Request) {
 		result = append(result, val.Photos.Photo...)
 	}
 	template.Must(template.ParseFiles("./sitemap.htm")).Execute(w, result)
+}
+
+func notFound(w http.ResponseWriter, r *http.Request) {
+	logs(r, "[!] Page Not Found")
+	w.WriteHeader(http.StatusNotFound)
+	w.Write([]byte("Maybe not in this timeline ... (35.701099, 139.738557)"))
 }
 
 func main() {
