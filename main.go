@@ -162,10 +162,13 @@ func photo(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("ETag", etagStr)
 				w.Header().Set("Cache-Control", "max-age=300")
 				tplPhoto.Execute(w, photoinfo.Photo)
+			} else {
+				notFound(w, r)
 			}
+		} else {
+			notFound(w, r)
 		}
 	}
-	notFound(w, r)
 }
 
 func sitemap(w http.ResponseWriter, r *http.Request) {
