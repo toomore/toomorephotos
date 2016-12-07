@@ -1,4 +1,5 @@
 *.log
+*.txt
 base_min.css*
 jquery.unveil*
 ticket.key

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"html/template"
@@ -22,13 +23,28 @@ var (
 	httpPort      = flag.String("p", ":8080", "HTTP port")
 	licenses      map[string]jsonstruct.License
 	photoPageExpr = regexp.MustCompile(`/p/([0-9]+)-?(.+)?`)
-	rTags         [14]string
+	rTags         []string
 	tplIndex      *template.Template
 	tplPhoto      *template.Template
 	userID        string
 )
 
+func getTags(result *[]string) {
+	file, err := os.Open("./tags.txt")
+	defer file.Close()
+
+	if err != nil {
+		log.Panic(err)
+	}
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		*result = append(*result, scanner.Text())
+	}
+	log.Println("Tags:", *result)
+}
+
 func init() {
+	getTags(&rTags)
 	funcs := template.FuncMap{
 		"isHTML": func(content string) (template.HTML, error) {
 			return template.HTML(strings.Replace(content, "\n", "<br>", -1)), nil
@@ -70,22 +86,6 @@ func init() {
 	f = flickr.NewFlickr(os.Getenv("FLICKRAPIKEY"), os.Getenv("FLICKRSECRET"))
 	f.AuthToken = os.Getenv("FLICKRUSERTOKEN")
 	userID = os.Getenv("FLICKRUSER")
-	rTags = [14]string{
-		"agfa,japan",
-		"blackandwhite",
-		"canon",
-		"fuji,japan",
-		"kodak,japan",
-		"kyoto",
-		"lomo",
-		"tokyo",
-		"taiwan",
-		"japan",
-		"moviefilms",
-		"EtoC",
-		"model",
-		"遺留給妳的文字與影像",
-	}
 
 	log.Println("Init flickr licenses list ...")
 	licenses = make(map[string]jsonstruct.License)
