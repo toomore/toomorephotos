@@ -26,6 +26,7 @@ var (
 	rTags         []string
 	tplIndex      *template.Template
 	tplPhoto      *template.Template
+	tplSitemap    *template.Template
 	userID        string
 )
 
@@ -82,6 +83,7 @@ func init() {
 	}
 	tplIndex, _ = template.Must(template.ParseFiles("./base.htm")).ParseFiles("./index.htm")
 	tplPhoto = template.Must(template.Must(template.ParseFiles("./base.htm")).Funcs(funcs).ParseFiles("./photo.htm"))
+	tplSitemap = template.Must(template.ParseFiles("./sitemap.htm"))
 
 	f = flickr.NewFlickr(os.Getenv("FLICKRAPIKEY"), os.Getenv("FLICKRSECRET"))
 	f.AuthToken = os.Getenv("FLICKRUSERTOKEN")
@@ -109,10 +111,8 @@ func fromSearch(tags string) []jsonstruct.Photo {
 	args["sort"] = "date-posted-desc"
 	args["user_id"] = userID
 
-	searchResult := f.PhotosSearch(args)
-
 	var result []jsonstruct.Photo
-	for _, val := range searchResult {
+	for _, val := range f.PhotosSearch(args) {
 		result = append(result, val.Photos.Photo...)
 	}
 
@@ -176,13 +176,11 @@ func sitemap(w http.ResponseWriter, r *http.Request) {
 	args["sort"] = "date-posted-desc"
 	args["user_id"] = userID
 
-	searchResult := f.PhotosSearch(args)
-
 	var result []jsonstruct.Photo
-	for _, val := range searchResult {
+	for _, val := range f.PhotosSearch(args) {
 		result = append(result, val.Photos.Photo...)
 	}
-	template.Must(template.ParseFiles("./sitemap.htm")).Execute(w, result)
+	tplSitemap.Execute(w, result)
 }
 
 func notFound(w http.ResponseWriter, r *http.Request) {
