@@ -198,6 +198,7 @@ func main() {
 	serveSingle("/favicon.ico", "favicon.ico")
 	serveSingle("/jquery.unveil.min.js", "jquery.unveil.min.js")
 	serveSingle("/base_min.css", "base_min.css")
+	serveSingle("/robots.txt", "robots.txt")
 	log.Println("HTTP Port:", *httpPort)
 	log.Println(http.ListenAndServe(*httpPort, nil))
 }
