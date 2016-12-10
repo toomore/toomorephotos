@@ -121,6 +121,7 @@ func fromSearch(tags string) []jsonstruct.Photo {
 
 func serveSingle(pattern string, filename string) {
 	http.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
+		logs(r, "[static]")
 		w.Header().Set("Cache-Control", "public")
 		http.ServeFile(w, r, filename)
 	})
