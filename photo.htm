@@ -77,7 +77,7 @@
     },
     "name": "{{.Title.Content}} Photo by Toomore",
     "alternateName": "{{.Title.Content}} {{.ID}}",
-    "description": "{{.Description.Content | isAltDesc}}",
+    "description": "{{.Description.Content | isAltDesc | isJSONContent}}",
     "image": "https://farm{{.Farm}}.staticflickr.com/{{.Server}}/{{.ID}}_{{.Secret}}_h.{{.Orgformat}}",
     "thumbnailUrl": "https://farm{{.Farm}}.staticflickr.com/{{.Server}}/{{.ID}}_{{.Secret}}_h.{{.Orgformat}}",
     "mainEntityOfPage": "https://www.flickr.com/photos/toomore/{{.ID}}",

@@ -50,8 +50,15 @@ func init() {
 		"isHTML": func(content string) (template.HTML, error) {
 			return template.HTML(strings.Replace(content, "\n", "<br>", -1)), nil
 		},
-		"isAltDesc": func(content string) (string, error) {
-			return strings.Replace(content, "\n", " ", -1), nil
+		"isAltDesc": func(content string) string {
+			return strings.Replace(content, "\n", " ", -1)
+		},
+		"isJSONContent": func(content string) string {
+			content = strings.Replace(content, "\"", "\\u0022", -1)
+			content = strings.Replace(content, "<", "\\u003c", -1)
+			content = strings.Replace(content, ">", "\\u003e", -1)
+			content = strings.Replace(content, "&", "\\u0026", -1)
+			return content
 		},
 		"replaceHover": func(content string) string {
 			return strings.Replace(content, " ", "-", -1)
