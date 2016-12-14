@@ -1,5 +1,6 @@
 body {
     background-color: #000;
+    font-family: arial;
 }
 .wall a:hover img {
   border: 1px #ccc solid;
@@ -10,54 +11,66 @@ body {
 @media only screen and (max-width: 1280px) {
     .wall img { width: 120px; height: 120px;}
     .photo img.image {width: 600px;}
+    .photo div.desc { width: 600px;}
 }
 @media only screen and (max-width: 1024px) {
     .wall img { width: 120px; height: 120px;}
     .photo img.image {width: 600px;}
+    .photo div.desc { width: 600px;}
 }
 @media only screen and (max-width: 980px) {
     .wall img { width: 132px; height: 132px;}
     .photo img.image {width: 600px;}
+    .photo div.desc { width: 600px;}
 }
 @media only screen and (max-width: 900px) {
     .wall img { width: 141px; height: 141px;}
     .photo img.image {width: 600px;}
+    .photo div.desc { width: 600px;}
 }
 @media only screen and (max-width: 800px) {
     .wall img { width: 106px; height: 106px;}
     .photo img.image {width: 600px;}
+    .photo div.desc { width: 600px;}
 }
 @media only screen and (max-width: 768px) {
     .wall img { width: 98px; height: 98px;}
     .photo img.image {width: 600px;}
+    .photo div.desc { width: 600px;}
 }
 @media only screen and (max-width: 480px) {
     .wall img { width: 110px; height: 110px;}
-    .photo img.image {width: 100%;}
+    .photo img.image {width: 360px;}
+    .photo div.desc { width: 360px;}
 }
 @media only screen and (max-width: 360px) {
     .wall img { width: 80px; height: 80px;}
-    .photo img.image {width: 100%;}
+    .photo img.image {width: 320px;}
+    .photo div.desc { width: 320px;}
 }
 @media only screen and (max-width: 320px) {
     .wall img { width: 95px; height: 95px;}
-    .photo img.image {width: 100%;}
+    .photo img.image {width: 95%;}
+    .photo div.desc { width: 95%;}
 }
 @media only screen and (min-width: 1281px) {
     .wall img { width: 121px; height: 121px;}
     .photo img.image {width: 600px;}
+    .photo div.desc { width: 600px;}
 }
 .photo img.image {
     border-radius: 3px;
     border: 1px solid #333;
 }
 
+.photo {
+    margin-top: 5px;
+}
 .photo div {
     color: #fff;
     font-size: 9pt;
 }
 .photo div.desc {
-    max-width: 600px;
     margin: auto;
     line-height: 11pt;
     overflow-wrap: break-word;
