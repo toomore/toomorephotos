@@ -40,7 +40,7 @@
     <meta name="format-detection" content="date=no">
     <meta name="format-detection" content="address=no">
     <meta name="format-detection" content="email=no">
-    <link rel="canonical" href="https://photos.toomore.net/p/{{.ID}}-{{.Title.Content}}">
+    <link rel="canonical" href="https://photos.toomore.net/p/{{.ID}}-{{.Title.Content | replaceHover }}">
     <link rel="copyright" href="{{.License | licensesURL}}">
 {{- end}}
 

@@ -53,6 +53,9 @@ func init() {
 		"isAltDesc": func(content string) (string, error) {
 			return strings.Replace(content, "\n", " ", -1), nil
 		},
+		"replaceHover": func(content string) string {
+			return strings.Replace(content, " ", "-", -1)
+		},
 		"toKeywords": func(data jsonstruct.Tags) (string, error) {
 			str := make([]string, len(data.Tag))
 			for i, tag := range data.Tag {
@@ -81,7 +84,7 @@ func init() {
 			return "image/jpeg"
 		},
 	}
-	tplIndex, _ = template.Must(template.ParseFiles("./base.htm")).ParseFiles("./index.htm")
+	tplIndex = template.Must(template.Must(template.ParseFiles("./base.htm")).Funcs(funcs).ParseFiles("./index.htm"))
 	tplPhoto = template.Must(template.Must(template.ParseFiles("./base.htm")).Funcs(funcs).ParseFiles("./photo.htm"))
 	tplSitemap = template.Must(template.ParseFiles("./sitemap.htm"))
 
