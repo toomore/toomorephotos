@@ -31,9 +31,8 @@
     <title>{{.Title.Content}} Toomore Photos</title>
     <meta name="description" content="{{.Description.Content | isAltDesc}}">
     <meta property="og:title" content="{{.Title.Content}} Photo by Toomore">
-    <meta property="og:description" content="{{.Description.Content | isAltDesc}}">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://photos.toomore.net/p/{{.ID}}-{{.Title.Content}}">
+    <meta property="og:url" content="https://photos.toomore.net/p/{{.ID}}-{{.Title.Content | replaceHover }}">
     <meta property="og:image" content="https://farm{{.Farm}}.staticflickr.com/{{.Server}}/{{.ID}}_{{.Secret}}_h.{{.Orgformat}}">
     <meta property="og:site_name" content="Toomore Photos">
     <meta name="format-detection" content="telephone=no">
