@@ -58,6 +58,7 @@ func init() {
 			content = strings.Replace(content, "<", "\\u003c", -1)
 			content = strings.Replace(content, ">", "\\u003e", -1)
 			content = strings.Replace(content, "&", "\\u0026", -1)
+			content = strings.Replace(content, "+", "\\u002b", -1)
 			return content
 		},
 		"replaceHover": func(content string) string {

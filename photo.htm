@@ -75,15 +75,15 @@
             "longitude": "{{.Location.Longitude}}"
         }
     },
-    "name": "{{.Title.Content}} Photo by Toomore",
-    "alternateName": "{{.Title.Content}} {{.ID}}",
+    "name": "{{.Title.Content | isJSONContent}} Photo by Toomore",
+    "alternateName": "{{.Title.Content | isJSONContent}} {{.ID}}",
     "description": "{{.Description.Content | isAltDesc | isJSONContent}}",
     "image": "https://farm{{.Farm}}.staticflickr.com/{{.Server}}/{{.ID}}_{{.Secret}}_h.{{.Orgformat}}",
     "thumbnailUrl": "https://farm{{.Farm}}.staticflickr.com/{{.Server}}/{{.ID}}_{{.Secret}}_h.{{.Orgformat}}",
     "mainEntityOfPage": "https://www.flickr.com/photos/toomore/{{.ID}}",
     "discussionUrl": "https://www.flickr.com/photos/toomore/{{.ID}}",
     "license": "{{.License | licensesURL}}",
-    "keywords": "{{.Tags | toKeywords}}",
+    "keywords": "{{.Tags | toKeywords | isJSONContent}}",
     "dateCreated": "{{.Dates.Taken | iso8601}}",
     "datePublished": "{{.Dates.Posted | iso8601}}",
     "dateModified": "{{.Dates.Lastupdate | iso8601}}",
