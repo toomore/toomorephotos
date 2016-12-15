@@ -180,7 +180,7 @@ func photo(w http.ResponseWriter, r *http.Request) {
 		etaghex = md5.New()
 		io.WriteString(etaghex, photoinfo.Photo.Title.Content)
 		io.WriteString(etaghex, photoinfo.Photo.Description.Content)
-		etagStr = fmt.Sprintf("%x", etaghex.Sum(nil))
+		etagStr = fmt.Sprintf("W/\"%x\"", etaghex.Sum(nil))
 	} else {
 		notFound(w, r)
 		return
