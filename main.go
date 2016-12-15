@@ -2,9 +2,12 @@ package main
 
 import (
 	"bufio"
+	"crypto/md5"
 	"flag"
 	"fmt"
+	"hash"
 	"html/template"
+	"io"
 	"log"
 	"math"
 	"net/http"
@@ -147,6 +150,7 @@ func index(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("X-Github", "github.com/toomore/toomorephotos")
 
 	if r.Header.Get("If-None-Match") == etagStr {
+		logs(r, "[304]")
 		w.WriteHeader(http.StatusNotModified)
 	} else {
 		w.Header().Set("ETag", etagStr)
@@ -162,24 +166,32 @@ func photo(w http.ResponseWriter, r *http.Request) {
 	if len(match) >= 2 {
 		photono = match[1]
 	}
-	etagStr := fmt.Sprintf("W/\"%s\"", photono)
+
+	if photono == "" {
+		notFound(w, r)
+		return
+	}
+	var photoinfo jsonstruct.PhotosGetInfo
+	photoinfo = f.PhotosGetInfo(photono)
+
+	var etaghex hash.Hash
+	var etagStr string
+	if photoinfo.Common.Stat == "ok" {
+		etaghex = md5.New()
+		io.WriteString(etaghex, photoinfo.Photo.Title.Content)
+		io.WriteString(etaghex, photoinfo.Photo.Description.Content)
+		etagStr = fmt.Sprintf("%x", etaghex.Sum(nil))
+	} else {
+		notFound(w, r)
+		return
+	}
 
 	if r.Header.Get("If-None-Match") == etagStr {
+		logs(r, "[304]")
 		w.WriteHeader(http.StatusNotModified)
 	} else {
-		var photoinfo jsonstruct.PhotosGetInfo
-		if photono != "" {
-			photoinfo = f.PhotosGetInfo(photono)
-			if photoinfo.Common.Stat == "ok" {
-				w.Header().Set("ETag", etagStr)
-				w.Header().Set("Cache-Control", "max-age=300")
-				tplPhoto.Execute(w, photoinfo.Photo)
-			} else {
-				notFound(w, r)
-			}
-		} else {
-			notFound(w, r)
-		}
+		w.Header().Set("ETag", etagStr)
+		tplPhoto.Execute(w, photoinfo.Photo)
 	}
 }
 
