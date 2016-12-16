@@ -8,6 +8,7 @@ import (
 	"hash"
 	"html/template"
 	"io"
+	"io/ioutil"
 	"log"
 	"math"
 	"net/http"
@@ -31,6 +32,7 @@ var (
 	tplPhoto      *template.Template
 	tplSitemap    *template.Template
 	userID        string
+	hashCache     map[string]string
 )
 
 func getTags(result *[]string) {
@@ -112,6 +114,7 @@ func init() {
 		licenses[data.ID] = data
 	}
 	log.Printf("Licenses: %+v", licenses)
+	hashCache = make(map[string]string)
 }
 
 func logs(r *http.Request, note string) {
@@ -134,10 +137,22 @@ func fromSearch(tags string) []jsonstruct.Photo {
 }
 
 func serveSingle(pattern string, filename string) {
+	if file, err := ioutil.ReadFile(filename); err == nil {
+		h := md5.New()
+		h.Write(file)
+		hashCache[filename] = fmt.Sprintf("W/\"%x\"", h.Sum(nil))
+	}
+
 	http.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
 		logs(r, "[static]")
-		w.Header().Set("Cache-Control", "public, max-age=900")
-		http.ServeFile(w, r, filename)
+		if r.Header.Get("If-None-Match") == hashCache[filename] {
+			logs(r, "[304]")
+			w.WriteHeader(http.StatusNotModified)
+		} else {
+			//w.Header().Set("Cache-Control", "public, max-age=900")
+			w.Header().Set("ETag", hashCache[filename])
+			http.ServeFile(w, r, filename)
+		}
 	})
 }
 
