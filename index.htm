@@ -3,6 +3,7 @@
         {{range .}}
         {{if .Ispublic}}<a href="/p/{{.ID}}-{{.Title | replaceHover}}"><img alt="{{.Title}} Photo by Toomore" data-src="https://farm{{.Farm}}.staticflickr.com/{{.Server}}/{{.ID}}_{{.Secret}}_q.jpg"></a>{{end}}{{end}}
     </div>
+    <gcse:search></gcse:search>
 {{end}}
 
 {{define "js"}}
@@ -11,6 +12,17 @@
     <script defer="defer">
         $(function() { $(".wall").find("img").unveil(300); });
     </script>
+	<script>
+	  (function() {
+		var cx = '009900412648408179576:qtr4qxps0cu';
+		var gcse = document.createElement('script');
+		gcse.type = 'text/javascript';
+		gcse.async = true;
+		gcse.src = 'https://cse.google.com/cse.js?cx=' + cx;
+		var s = document.getElementsByTagName('script')[0];
+		s.parentNode.insertBefore(gcse, s);
+	  })();
+	</script>
 {{end}}
 
 {{define "og" -}}
