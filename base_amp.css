@@ -1,0 +1,86 @@
+body {
+    background-color: #000;
+    font-family: arial;
+}
+@media only screen and (max-width: 1280px) {
+    .photo amp-img.image {width: 600px;}
+    .photo div.desc { width: 600px;}
+}
+@media only screen and (max-width: 1024px) {
+    .photo amp-img.image {width: 600px;}
+    .photo div.desc { width: 600px;}
+}
+@media only screen and (max-width: 980px) {
+    .photo amp-img.image {width: 600px;}
+    .photo div.desc { width: 600px;}
+}
+@media only screen and (max-width: 900px) {
+    .photo amp-img.image {width: 600px;}
+    .photo div.desc { width: 600px;}
+}
+@media only screen and (max-width: 800px) {
+    .photo amp-img.image {width: 600px;}
+    .photo div.desc { width: 600px;}
+}
+@media only screen and (max-width: 768px) {
+    .photo amp-img.image {width: 600px;}
+    .photo div.desc { width: 600px;}
+}
+@media only screen and (max-width: 480px) {
+    .photo amp-img.image {width: 360px;}
+    .photo div.desc { width: 360px;}
+}
+@media only screen and (max-width: 360px) {
+    .photo amp-img.image {width: 320px;}
+    .photo div.desc { width: 320px;}
+}
+@media only screen and (max-width: 320px) {
+    .photo amp-img.image {width: 95%;}
+    .photo div.desc { width: 95%;}
+}
+@media only screen and (min-width: 1281px) {
+    .photo amp-img.image {width: 600px;}
+    .photo div.desc { width: 600px;}
+}
+.photo amp-img.image {
+    border-radius: 3px;
+    border: 1px solid #333;
+    display: inline-block;
+}
+
+.photo amp-img img {
+    display: block;
+    margin: 0 auto;
+}
+
+.photo {
+    margin-top: 5px;
+}
+.photo div {
+    color: #fff;
+    font-size: 9pt;
+}
+.photo div.desc {
+    margin: auto;
+    line-height: 11pt;
+    overflow-wrap: break-word;
+}
+.photo div.desc h1 {
+    font-size: 8pt;
+    font-weight: bold;
+    font-style: italic;
+    text-align: right;
+}
+.photo div.by {
+    font-weight: bold;
+}
+.photo div.by a {
+    color: #fff;
+}
+.photo div.tag {
+    color: #aaa;
+}
+.photo div.desc a {
+    color: #f1f;
+    font-weight: bold;
+}

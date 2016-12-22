@@ -26,10 +26,11 @@ var (
 	f             *flickr.Flickr
 	httpPort      = flag.String("p", ":8080", "HTTP port")
 	licenses      map[string]jsonstruct.License
-	photoPageExpr = regexp.MustCompile(`/p/([0-9]+)-?(.+)?`)
+	photoPageExpr = regexp.MustCompile(`/p/(amp/)?([0-9]+)-?(.+)?`)
 	rTags         []string
 	tplIndex      *template.Template
 	tplPhoto      *template.Template
+	tplPhotoAMP   *template.Template
 	tplSitemap    *template.Template
 	userID        string
 	hashCache     map[string]string
@@ -99,6 +100,7 @@ func init() {
 	}
 	tplIndex = template.Must(template.Must(template.ParseFiles("./base.htm")).Funcs(funcs).ParseFiles("./index.htm"))
 	tplPhoto = template.Must(template.Must(template.ParseFiles("./base.htm")).Funcs(funcs).ParseFiles("./photo.htm"))
+	tplPhotoAMP = template.Must(template.Must(template.ParseFiles("./base_amp.htm")).Funcs(funcs).ParseFiles("./photo_amp.htm"))
 	tplSitemap = template.Must(template.ParseFiles("./sitemap.htm"))
 
 	f = flickr.NewFlickr(os.Getenv("FLICKRAPIKEY"), os.Getenv("FLICKRSECRET"))
@@ -179,7 +181,7 @@ func photo(w http.ResponseWriter, r *http.Request) {
 	match := photoPageExpr.FindStringSubmatch(r.RequestURI)
 	var photono string
 	if len(match) >= 2 {
-		photono = match[1]
+		photono = match[2]
 	}
 
 	if photono == "" {
@@ -206,7 +208,11 @@ func photo(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotModified)
 	} else {
 		w.Header().Set("ETag", etagStr)
-		tplPhoto.Execute(w, photoinfo.Photo)
+		if match[1] == "" {
+			tplPhoto.Execute(w, photoinfo.Photo)
+		} else {
+			tplPhotoAMP.Execute(w, photoinfo.Photo)
+		}
 	}
 }
 
@@ -237,6 +243,7 @@ func main() {
 	serveSingle("/favicon.ico", "favicon.ico")
 	serveSingle("/jquery.unveil.min.js", "jquery.unveil.min.js")
 	serveSingle("/base_min.css", "base_min.css")
+	serveSingle("/base_amp_min.css", "base_amp_min.css")
 	serveSingle("/robots.txt", "robots.txt")
 	log.Println("HTTP Port:", *httpPort)
 	log.Println(http.ListenAndServe(*httpPort, nil))

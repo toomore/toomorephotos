@@ -1,6 +1,6 @@
 *.log
 *.txt
-base_min.css*
+*_min.css
 jquery.unveil*
 ticket.key
 toomorephotos*
