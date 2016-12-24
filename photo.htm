@@ -3,7 +3,7 @@
         <a href="//www.flickr.com/photos/toomore/{{.ID}}">
             <img class="image"
             alt="{{.Title.Content}} {{.Description.Content | isAltDesc}} Photo by Toomore"
-            src="https://farm{{.Farm}}.staticflickr.com/{{.Server}}/{{.ID}}_{{.Secret}}_b.{{.Orgformat}}">
+            src="https://farm{{.Farm}}.staticflickr.com/{{.Server}}/{{.ID}}_{{.Secret}}_b.jpg">
         </a>
         <div class="desc">
             <h1>{{.Title.Content}}</h1>
@@ -34,7 +34,7 @@
     <meta property="og:description" content="{{.Description.Content | isAltDesc}}">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://photos.toomore.net/p/{{.ID}}-{{.Title.Content | replaceHover }}">
-    <meta property="og:image" content="https://farm{{.Farm}}.staticflickr.com/{{.Server}}/{{.ID}}_{{.Secret}}_h.{{.Orgformat}}">
+    <meta property="og:image" content="https://farm{{.Farm}}.staticflickr.com/{{.Server}}/{{.ID}}_{{.Secret}}_h.jpg">
     <meta property="og:site_name" content="Toomore Photos">
     <meta name="format-detection" content="telephone=no">
     <meta name="format-detection" content="date=no">
@@ -79,8 +79,8 @@
     "name": "{{.Title.Content | isJSONContent}} Photo by Toomore",
     "alternateName": "{{.Title.Content | isJSONContent}} {{.ID}}",
     "description": "{{.Description.Content | isAltDesc | isJSONContent}}",
-    "image": "https://farm{{.Farm}}.staticflickr.com/{{.Server}}/{{.ID}}_{{.Secret}}_h.{{.Orgformat}}",
-    "thumbnailUrl": "https://farm{{.Farm}}.staticflickr.com/{{.Server}}/{{.ID}}_{{.Secret}}_h.{{.Orgformat}}",
+    "image": "https://farm{{.Farm}}.staticflickr.com/{{.Server}}/{{.ID}}_{{.Secret}}_h.jpg",
+    "thumbnailUrl": "https://farm{{.Farm}}.staticflickr.com/{{.Server}}/{{.ID}}_{{.Secret}}_h.jpg",
     "mainEntityOfPage": "https://www.flickr.com/photos/toomore/{{.ID}}",
     "discussionUrl": "https://www.flickr.com/photos/toomore/{{.ID}}",
     "license": "{{.License | licensesURL}}",

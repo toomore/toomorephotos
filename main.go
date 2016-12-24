@@ -92,9 +92,9 @@ func init() {
 			return time.Unix(int64(times), 0).Format(time.RFC3339)
 		},
 		"fileFormat": func(format string) string {
-			if format == "png" {
-				return "image/png"
-			}
+			//if format == "png" {
+			//	return "image/png"
+			//}
 			return "image/jpeg"
 		},
 	}
