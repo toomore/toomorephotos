@@ -70,12 +70,12 @@ func init() {
 		"replaceHover": func(content string) string {
 			return strings.Replace(content, " ", "-", -1)
 		},
-		"toKeywords": func(data jsonstruct.Tags) (string, error) {
+		"toKeywords": func(data jsonstruct.Tags) string {
 			str := make([]string, len(data.Tag))
 			for i, tag := range data.Tag {
 				str[i] = tag.Raw
 			}
-			return strings.Join(str, ","), nil
+			return strings.Join(str, ",")
 		},
 		"licensesName": func(lno string) string {
 			return licenses[lno].Name
@@ -90,12 +90,6 @@ func init() {
 			}
 			times, _ := strconv.Atoi(stamp)
 			return time.Unix(int64(times), 0).Format(time.RFC3339)
-		},
-		"fileFormat": func(format string) string {
-			//if format == "png" {
-			//	return "image/png"
-			//}
-			return "image/jpeg"
 		},
 	}
 	tplIndex = template.Must(template.Must(template.ParseFiles("./base.htm")).Funcs(funcs).ParseFiles("./index.htm"))
