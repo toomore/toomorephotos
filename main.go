@@ -18,6 +18,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gorilla/feeds"
 	"github.com/toomore/lazyflickrgo/flickr"
 	"github.com/toomore/lazyflickrgo/jsonstruct"
 )
@@ -50,48 +51,49 @@ func getTags(result *[]string) {
 	log.Println("Tags:", *result)
 }
 
+var funcs = template.FuncMap{
+	"isHTML": func(content string) (template.HTML, error) {
+		return template.HTML(strings.Replace(content, "\n", "<br>", -1)), nil
+	},
+	"isAltDesc": func(content string) string {
+		return strings.Replace(content, "\n", " ", -1)
+	},
+	"isJSONContent": func(content string) string {
+		content = strings.Replace(content, "\"", "\\u0022", -1)
+		content = strings.Replace(content, "<", "\\u003c", -1)
+		content = strings.Replace(content, ">", "\\u003e", -1)
+		content = strings.Replace(content, "&", "\\u0026", -1)
+		content = strings.Replace(content, "+", "\\u002b", -1)
+		return content
+	},
+	"replaceHover": func(content string) string {
+		return strings.Replace(content, " ", "-", -1)
+	},
+	"toKeywords": func(data jsonstruct.Tags) string {
+		str := make([]string, len(data.Tag))
+		for i, tag := range data.Tag {
+			str[i] = tag.Raw
+		}
+		return strings.Join(str, ",")
+	},
+	"licensesName": func(lno string) string {
+		return licenses[lno].Name
+	},
+	"licensesURL": func(lno string) string {
+		return licenses[lno].URL
+	},
+	"iso8601": func(stamp string) string {
+		ts, err := time.Parse("2006-01-02 15:04:05", stamp)
+		if err == nil {
+			return ts.Format(time.RFC3339)
+		}
+		times, _ := strconv.Atoi(stamp)
+		return time.Unix(int64(times), 0).Format(time.RFC3339)
+	},
+}
+
 func init() {
 	getTags(&rTags)
-	funcs := template.FuncMap{
-		"isHTML": func(content string) (template.HTML, error) {
-			return template.HTML(strings.Replace(content, "\n", "<br>", -1)), nil
-		},
-		"isAltDesc": func(content string) string {
-			return strings.Replace(content, "\n", " ", -1)
-		},
-		"isJSONContent": func(content string) string {
-			content = strings.Replace(content, "\"", "\\u0022", -1)
-			content = strings.Replace(content, "<", "\\u003c", -1)
-			content = strings.Replace(content, ">", "\\u003e", -1)
-			content = strings.Replace(content, "&", "\\u0026", -1)
-			content = strings.Replace(content, "+", "\\u002b", -1)
-			return content
-		},
-		"replaceHover": func(content string) string {
-			return strings.Replace(content, " ", "-", -1)
-		},
-		"toKeywords": func(data jsonstruct.Tags) string {
-			str := make([]string, len(data.Tag))
-			for i, tag := range data.Tag {
-				str[i] = tag.Raw
-			}
-			return strings.Join(str, ",")
-		},
-		"licensesName": func(lno string) string {
-			return licenses[lno].Name
-		},
-		"licensesURL": func(lno string) string {
-			return licenses[lno].URL
-		},
-		"iso8601": func(stamp string) string {
-			ts, err := time.Parse("2006-01-02 15:04:05", stamp)
-			if err == nil {
-				return ts.Format(time.RFC3339)
-			}
-			times, _ := strconv.Atoi(stamp)
-			return time.Unix(int64(times), 0).Format(time.RFC3339)
-		},
-	}
 	tplIndex = template.Must(template.Must(template.ParseFiles("./base.htm")).Funcs(funcs).ParseFiles("./index.htm"))
 	tplPhoto = template.Must(template.Must(template.ParseFiles("./base.htm")).Funcs(funcs).ParseFiles("./photo.htm"))
 	tplPhotoAMP = template.Must(template.Must(template.ParseFiles("./base_amp.htm")).Funcs(funcs).ParseFiles("./photo_amp.htm"))
@@ -210,15 +212,72 @@ func photo(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func sitemap(w http.ResponseWriter, r *http.Request) {
+func allPhotos(result *[]jsonstruct.Photo) {
 	args := make(map[string]string)
 	args["sort"] = "date-posted-desc"
 	args["user_id"] = userID
 
-	var result []jsonstruct.Photo
 	for _, val := range f.PhotosSearch(args) {
-		result = append(result, val.Photos.Photo...)
+		*result = append(*result, val.Photos.Photo...)
 	}
+}
+
+func createFeeds(data []jsonstruct.Photo) *feeds.Feed {
+	feed := &feeds.Feed{
+		Title:       "Toomore Photos",
+		Link:        &feeds.Link{Href: "https://photos.toomore.net/"},
+		Description: "From here to see what I see.",
+		Author:      &feeds.Author{Name: "Toomore Chiang", Email: "toomore0929@gmail.com"},
+	}
+
+	var result []jsonstruct.Photo
+	allPhotos(&result)
+
+	for _, v := range result[:20] {
+		var photoinfo jsonstruct.PhotosGetInfo
+		photoinfo = f.PhotosGetInfo(v.ID)
+		times, _ := strconv.Atoi(photoinfo.Photo.Dates.Lastupdate)
+		updated := time.Unix(int64(times), 0)
+
+		desc := fmt.Sprintf(`<a href="https://photos.toomore.net/p/%s"><img src="https://farm%d.staticflickr.com/%s/%s_%s_h.jpg"></a>
+%s
+Photo by <a href="https://toomore.net/">Toomore</a>`, photoinfo.Photo.ID, photoinfo.Photo.Farm, photoinfo.Photo.Server, photoinfo.Photo.ID, photoinfo.Photo.Secret, photoinfo.Photo.Description.Content)
+
+		feed.Items = append(feed.Items, &feeds.Item{
+			Id:          fmt.Sprintf("https://photos.toomore.net/p/%s", v.ID),
+			Title:       fmt.Sprintf("%s (%s)", v.Title, v.ID),
+			Link:        &feeds.Link{Href: fmt.Sprintf("https://photos.toomore.net/p/%s", v.ID)},
+			Description: desc,
+			Updated:     updated,
+			Author:      &feeds.Author{Name: "toomore0929@gmail.com (Toomore Chiang)"},
+		})
+	}
+	return feed
+}
+
+func rss(w http.ResponseWriter, r *http.Request) {
+	var result []jsonstruct.Photo
+	allPhotos(&result)
+	feed := feeds.Rss{Feed: createFeeds(result)}
+	rssfeed := feed.RssFeed()
+	rssfeed.Language = "zh"
+
+	rss, _ := feeds.ToXML(rssfeed)
+	w.Write([]byte(rss))
+}
+
+func atom(w http.ResponseWriter, r *http.Request) {
+	var result []jsonstruct.Photo
+	allPhotos(&result)
+	feed := feeds.Atom{Feed: createFeeds(result)}
+	rssfeed := feed.AtomFeed()
+
+	atom, _ := feeds.ToXML(rssfeed)
+	w.Write([]byte(atom))
+}
+func sitemap(w http.ResponseWriter, r *http.Request) {
+	var result []jsonstruct.Photo
+	allPhotos(&result)
 	tplSitemap.Execute(w, result)
 }
 
@@ -233,6 +292,8 @@ func main() {
 	http.HandleFunc("/", index)
 	http.HandleFunc("/p/", photo)
 	http.HandleFunc("/sitemap/", sitemap)
+	http.HandleFunc("/rss", rss)
+	http.HandleFunc("/atom", atom)
 	//http.Handle("/static", http.FileServer(http.Dir("./static/")))
 	serveSingle("/favicon.ico", "favicon.ico")
 	serveSingle("/jquery.unveil.min.js", "jquery.unveil.min.js")
