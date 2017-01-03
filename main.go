@@ -233,7 +233,7 @@ func createFeeds(data []jsonstruct.Photo) *feeds.Feed {
 	var result []jsonstruct.Photo
 	allPhotos(&result)
 
-	for _, v := range result[:20] {
+	for _, v := range result[:100] {
 		var photoinfo jsonstruct.PhotosGetInfo
 		photoinfo = f.PhotosGetInfo(v.ID)
 		times, _ := strconv.Atoi(photoinfo.Photo.Dates.Lastupdate)
