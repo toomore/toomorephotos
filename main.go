@@ -233,11 +233,17 @@ func createFeeds(data []jsonstruct.Photo) *feeds.Feed {
 	var result []jsonstruct.Photo
 	allPhotos(&result)
 
-	for _, v := range result[:100] {
-		var photoinfo jsonstruct.PhotosGetInfo
+	var photoinfo jsonstruct.PhotosGetInfo
+	var times int
+	var updated time.Time
+	for i, v := range result[:100] {
 		photoinfo = f.PhotosGetInfo(v.ID)
-		times, _ := strconv.Atoi(photoinfo.Photo.Dates.Lastupdate)
-		updated := time.Unix(int64(times), 0)
+		times, _ = strconv.Atoi(photoinfo.Photo.Dates.Posted)
+		updated = time.Unix(int64(times), 0)
+
+		if i == 0 {
+			feed.Updated = updated
+		}
 
 		desc := fmt.Sprintf(`<a href="https://photos.toomore.net/p/%s"><img src="https://farm%d.staticflickr.com/%s/%s_%s_h.jpg"></a>
 %s
