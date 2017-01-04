@@ -11,6 +11,9 @@ stop:
 
 start:
 	./toomorephotos_min >> ./log.log 2>&1 &
+	./toomorephotos_min -p :8081 >> ./log.log 2>&1 &
+	./toomorephotos_min -p :8082 >> ./log.log 2>&1 &
+	./toomorephotos_min -p :8083 >> ./log.log 2>&1 &
 
 restart:
 	- make stop
