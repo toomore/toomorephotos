@@ -1,5 +1,5 @@
 build:
-	GOOS=linux GOARCH=amd64 go build -o toomorephotos_min -ldflags "-s" ./main.go
+	GOOS=linux GOARCH=amd64 go build -o toomorephotos_min -ldflags "-linkmode external -extldflags -static" ./main.go
 
 minify:
 	minify -o ./jquery.unveil.min.js ./jquery.unveil.js
