@@ -245,7 +245,7 @@ func createFeeds(data []jsonstruct.Photo) *feeds.Feed {
 			feed.Updated = updated
 		}
 
-		desc := fmt.Sprintf(`<a href="https://photos.toomore.net/p/%s"><img src="https://farm%d.staticflickr.com/%s/%s_%s_h.jpg"></a>
+		desc := fmt.Sprintf(`<a href="https://photos.toomore.net/p/%s"><img src="https://farm%d.staticflickr.com/%s/%s_%s_b.jpg"></a>
 %s
 <br>
 Photo by <a href="https://toomore.net/">Toomore</a>`, photoinfo.Photo.ID, photoinfo.Photo.Farm, photoinfo.Photo.Server, photoinfo.Photo.ID, photoinfo.Photo.Secret, strings.Replace(photoinfo.Photo.Description.Content, "\n", "<br>", -1))
