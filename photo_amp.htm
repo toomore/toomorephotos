@@ -1,51 +1,43 @@
 {{define "content"}}
-    <div class="photo" style="text-align:center;">
-        <a href="//www.flickr.com/photos/toomore/{{.ID}}">
+    <div class="photo">
+        <a href="//www.flickr.com/photos/toomore/{{.P.Photo.ID}}">
             <amp-img class="image"
             layout="responsive"
-            width="600"
-            height="400"
-            media="(max-width: 600px)"
-            alt="{{.Title.Content}} {{.Description.Content | isAltDesc}} Photo by Toomore"
-            src="https://farm{{.Farm}}.staticflickr.com/{{.Server}}/{{.ID}}_{{.Secret}}_b.{{.Orgformat}}"></amp-img>
+            width="{{.Width}}"
+            height="{{.Height}}"
+            media="(max-width: {{.Width}}px)"
+            alt="{{.P.Photo.Title.Content}} {{.P.Photo.Description.Content | isAltDesc}} Photo by Toomore"
+            src="https://farm{{.P.Photo.Farm}}.staticflickr.com/{{.P.Photo.Server}}/{{.P.Photo.ID}}_{{.P.Photo.Secret}}_b.jpg"></amp-img>
         </a>
         <div class="desc">
-            <h1>{{.Title.Content}}</h1>
-            <p>{{.Description.Content | isHTML}}</p>
+            <h1>{{.P.Photo.Title.Content}}</h1>
+            <p>{{.P.Photo.Description.Content | isHTML}}</p>
         </div>
         <div class="tag">
-            {{range .Tags.Tag }}<span>#{{.Raw}}</span> {{end}}
+            {{range .P.Photo.Tags.Tag }}<span>#{{.Raw}}</span> {{end}}
         </div>
         <div class="by">
-            <p>Photo by <a href="//www.flickr.com/photos/toomore/{{.ID}}">Toomore</a> / <a href="{{.License | licensesURL}}">{{.License | licensesName}}</a></p>
+            <p>Photo by <a href="//www.flickr.com/photos/toomore/{{.P.Photo.ID}}">Toomore</a> / <a href="{{.P.Photo.License | licensesURL}}">{{.P.Photo.License | licensesName}}</a></p>
         </div>
-        <div><a href="//maps.google.com/?q={{.Location.Latitude}},{{.Location.Longitude}}"><amp-img layout="fixed" width="300" height="200" src="//maps.googleapis.com/maps/api/staticmap?size=300x200&center={{.Location.Latitude}},{{.Location.Longitude}}&key=AIzaSyBWnlG1YSHLvCL3075oxLvXXidrzH57tTY&zoom=16&scale=2&maptype=hybrid"></amp-img></a></div>
-        <div>
-			<!-- photos -->
-			<ins class="adsbygoogle"
-				 style="display:block"
-				 data-ad-client="ca-pub-8083183430499740"
-				 data-ad-slot="4329274259"
-				 data-ad-format="auto"></ins>
-        </div>
+        <div><a href="//maps.google.com/?q={{.P.Photo.Location.Latitude}},{{.P.Photo.Location.Longitude}}"><amp-img layout="fixed" width="300" height="200" src="//maps.googleapis.com/maps/api/staticmap?size=300x200&center={{.P.Photo.Location.Latitude}},{{.P.Photo.Location.Longitude}}&key=AIzaSyBWnlG1YSHLvCL3075oxLvXXidrzH57tTY&zoom=16&scale=2&maptype=hybrid"></amp-img></a></div>
     </div>
 {{end}}
 
 {{define "og" -}}
-    <title>{{.Title.Content}} Toomore Photos</title>
-    <meta name="description" content="{{.Description.Content | isAltDesc}}">
-    <meta property="og:title" content="{{.Title.Content}} Photo by Toomore">
-    <meta property="og:description" content="{{.Description.Content | isAltDesc}}">
+    <title>{{.P.Photo.Title.Content}} Toomore Photos</title>
+    <meta name="description" content="{{.P.Photo.Description.Content | isAltDesc}}">
+    <meta property="og:title" content="{{.P.Photo.Title.Content}} Photo by Toomore">
+    <meta property="og:description" content="{{.P.Photo.Description.Content | isAltDesc}}">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://photos.toomore.net/p/{{.ID}}-{{.Title.Content | replaceHover }}">
-    <meta property="og:image" content="https://farm{{.Farm}}.staticflickr.com/{{.Server}}/{{.ID}}_{{.Secret}}_h.{{.Orgformat}}">
+    <meta property="og:url" content="https://photos.toomore.net/p/{{.P.Photo.ID}}-{{.P.Photo.Title.Content | replaceHover }}">
+    <meta property="og:image" content="https://farm{{.P.Photo.Farm}}.staticflickr.com/{{.P.Photo.Server}}/{{.P.Photo.ID}}_{{.P.Photo.Secret}}_h.{{.P.Photo.Orgformat}}">
     <meta property="og:site_name" content="Toomore Photos">
     <meta name="format-detection" content="telephone=no">
     <meta name="format-detection" content="date=no">
     <meta name="format-detection" content="address=no">
     <meta name="format-detection" content="email=no">
-    <link rel="canonical" href="https://photos.toomore.net/p/{{.ID}}-{{.Title.Content | replaceHover }}">
-    <link rel="copyright" href="{{.License | licensesURL}}">
+    <link rel="canonical" href="https://photos.toomore.net/p/{{.P.Photo.ID}}-{{.P.Photo.Title.Content | replaceHover }}">
+    <link rel="copyright" href="{{.P.Photo.License | licensesURL}}">
 {{- end}}
 
 {{define "jsonld" -}}
@@ -67,32 +59,32 @@
         "@type": "Place",
         "geo": {
             "@type": "GeoCoordinates",
-            "latitude": "{{.Location.Latitude}}",
-            "longitude": "{{.Location.Longitude}}"
+            "latitude": "{{.P.Photo.Location.Latitude}}",
+            "longitude": "{{.P.Photo.Location.Longitude}}"
         }
     },
     "locationCreated": {
         "@type": "Place",
         "geo": {
             "@type": "GeoCoordinates",
-            "latitude": "{{.Location.Latitude}}",
-            "longitude": "{{.Location.Longitude}}"
+            "latitude": "{{.P.Photo.Location.Latitude}}",
+            "longitude": "{{.P.Photo.Location.Longitude}}"
         }
     },
-    "name": "{{.Title.Content | isJSONContent}} Photo by Toomore",
-    "alternateName": "{{.Title.Content | isJSONContent}} {{.ID}}",
-    "description": "{{.Description.Content | isAltDesc | isJSONContent}}",
-    "image": "https://farm{{.Farm}}.staticflickr.com/{{.Server}}/{{.ID}}_{{.Secret}}_h.{{.Orgformat}}",
-    "thumbnailUrl": "https://farm{{.Farm}}.staticflickr.com/{{.Server}}/{{.ID}}_{{.Secret}}_h.{{.Orgformat}}",
-    "mainEntityOfPage": "https://www.flickr.com/photos/toomore/{{.ID}}",
-    "discussionUrl": "https://www.flickr.com/photos/toomore/{{.ID}}",
-    "license": "{{.License | licensesURL}}",
-    "keywords": "{{.Tags | toKeywords | isJSONContent}}",
-    "dateCreated": "{{.Dates.Taken | iso8601}}",
-    "datePublished": "{{.Dates.Posted | iso8601}}",
-    "dateModified": "{{.Dates.Lastupdate | iso8601}}",
+    "name": "{{.P.Photo.Title.Content | isJSONContent}} Photo by Toomore",
+    "alternateName": "{{.P.Photo.Title.Content | isJSONContent}} {{.P.Photo.ID}}",
+    "description": "{{.P.Photo.Description.Content | isAltDesc | isJSONContent}}",
+    "image": "https://farm{{.P.Photo.Farm}}.staticflickr.com/{{.P.Photo.Server}}/{{.P.Photo.ID}}_{{.P.Photo.Secret}}_h.{{.P.Photo.Orgformat}}",
+    "thumbnailUrl": "https://farm{{.P.Photo.Farm}}.staticflickr.com/{{.P.Photo.Server}}/{{.P.Photo.ID}}_{{.P.Photo.Secret}}_h.{{.P.Photo.Orgformat}}",
+    "mainEntityOfPage": "https://www.flickr.com/photos/toomore/{{.P.Photo.ID}}",
+    "discussionUrl": "https://www.flickr.com/photos/toomore/{{.P.Photo.ID}}",
+    "license": "{{.P.Photo.License | licensesURL}}",
+    "keywords": "{{.P.Photo.Tags | toKeywords | isJSONContent}}",
+    "dateCreated": "{{.P.Photo.Dates.Taken | iso8601}}",
+    "datePublished": "{{.P.Photo.Dates.Posted | iso8601}}",
+    "dateModified": "{{.P.Photo.Dates.Lastupdate | iso8601}}",
     "fileFormat": "image/jpeg",
-    "url": "https://photos.toomore.net/p/{{.ID}}"
+    "url": "https://photos.toomore.net/p/{{.P.Photo.ID}}"
 }
 </script>
 {{- end}}

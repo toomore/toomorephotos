@@ -172,6 +172,12 @@ func index(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+type ampphoto struct {
+	P      jsonstruct.PhotosGetInfo
+	Width  int64
+	Height int64
+}
+
 func photo(w http.ResponseWriter, r *http.Request) {
 	logs(r, "")
 	match := photoPageExpr.FindStringSubmatch(r.RequestURI)
@@ -207,7 +213,18 @@ func photo(w http.ResponseWriter, r *http.Request) {
 		if match[1] == "" {
 			tplPhoto.Execute(w, photoinfo.Photo)
 		} else {
-			tplPhotoAMP.Execute(w, photoinfo.Photo)
+			var width int64
+			var height int64
+			sizes := f.PhotosGetSizes(photono)
+			for _, v := range sizes.Sizes.Size {
+				if v.Label == "Medium 640" {
+					log.Println(v.Width, v.Height)
+					width, _ = v.Width.Int64()
+					height, _ = v.Height.Int64()
+					break
+				}
+			}
+			tplPhotoAMP.Execute(w, ampphoto{P: photoinfo, Width: width, Height: height})
 		}
 	}
 }
