@@ -205,6 +205,11 @@ func photo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if photoinfo.Photo.Owner.Nsid != "92438116@N00" {
+		notFound(w, r)
+		return
+	}
+
 	if r.Header.Get("If-None-Match") == etagStr {
 		logs(r, "[304]")
 		w.WriteHeader(http.StatusNotModified)
