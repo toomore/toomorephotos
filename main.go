@@ -156,7 +156,13 @@ func serveSingle(pattern string, filename string) {
 
 func index(w http.ResponseWriter, r *http.Request) {
 	logs(r, "")
-	modValue := int(math.Mod(float64(time.Now().Minute()), float64(len(rTags))))
+	var modValue int
+	var err error
+	if modValue, err = strconv.Atoi(r.URL.Query().Get("t")); err == nil {
+		modValue = int(math.Mod(float64(modValue), float64(len(rTags))))
+	} else {
+		modValue = int(math.Mod(float64(time.Now().Minute()), float64(len(rTags))))
+	}
 	etagStr := fmt.Sprintf("W/\"%d-%s\"", modValue, rTags[modValue])
 
 	w.Header().Set("X-Tags", rTags[modValue])
@@ -304,10 +310,19 @@ func atom(w http.ResponseWriter, r *http.Request) {
 	atom, _ := feeds.ToXML(rssfeed)
 	w.Write([]byte(atom))
 }
+
 func sitemap(w http.ResponseWriter, r *http.Request) {
 	var result []jsonstruct.Photo
 	allPhotos(&result)
-	tplSitemap.Execute(w, result)
+	tags := make([]int, len(rTags))
+	for i := range rTags {
+		tags[i] = i
+	}
+	data := struct {
+		R []jsonstruct.Photo
+		T []int
+	}{result, tags}
+	tplSitemap.Execute(w, data)
 }
 
 func notFound(w http.ResponseWriter, r *http.Request) {
