@@ -1,3 +1,8 @@
+{{define "link" -}}
+{{range .}}    <link rel="prefetch" href="/p/{{.ID}}-{{.Title | replaceHover}}">
+{{end}}
+{{- end}}
+
 {{define "content"}}
     <div class="wall" style="text-align:center;">
         {{range .}}
