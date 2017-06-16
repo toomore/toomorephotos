@@ -174,7 +174,12 @@ func index(w http.ResponseWriter, r *http.Request) {
 	} else {
 		w.Header().Set("ETag", etagStr)
 		w.Header().Set("Cache-Control", "max-age=120")
-		tplIndex.Execute(w, fromSearch(rTags[modValue]))
+		result := fromSearch(rTags[modValue])
+		data := struct {
+			R []jsonstruct.Photo
+			L []jsonstruct.Photo
+		}{result, result[:30]}
+		tplIndex.Execute(w, data)
 	}
 }
 

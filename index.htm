@@ -1,11 +1,11 @@
 {{define "link" -}}
-{{range .}}    <link rel="prefetch" href="/p/{{.ID}}-{{.Title | replaceHover}}">
+{{range .L}}    <link rel="prefetch" href="/p/{{.ID}}-{{.Title | replaceHover}}">
 {{end}}
 {{- end}}
 
 {{define "content"}}
     <div class="wall" style="text-align:center;">
-        {{range .}}
+        {{range .R}}
         {{if .Ispublic}}<a href="/p/{{.ID}}-{{.Title | replaceHover}}"><img alt="{{.Title}} Photo by Toomore" data-src="https://farm{{.Farm}}.staticflickr.com/{{.Server}}/{{.ID}}_{{.Secret}}_q.jpg"></a>{{end}}{{end}}
     </div>
     <gcse:search></gcse:search>
