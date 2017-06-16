@@ -276,7 +276,8 @@ func createFeeds(data []jsonstruct.Photo) *feeds.Feed {
 		desc := fmt.Sprintf(`<a href="https://photos.toomore.net/p/%s"><img src="https://farm%d.staticflickr.com/%s/%s_%s_b.jpg"></a>
 %s
 <br>
-Photo by <a href="https://toomore.net/">Toomore</a>`, photoinfo.Photo.ID, photoinfo.Photo.Farm, photoinfo.Photo.Server, photoinfo.Photo.ID, photoinfo.Photo.Secret, strings.Replace(photoinfo.Photo.Description.Content, "\n", "<br>", -1))
+Photo by <a href="https://toomore.net/">Toomore</a><br><img width=1 height=3 src="https://photos.toomore.net/fr?r=%s">`,
+			photoinfo.Photo.ID, photoinfo.Photo.Farm, photoinfo.Photo.Server, photoinfo.Photo.ID, photoinfo.Photo.Secret, strings.Replace(photoinfo.Photo.Description.Content, "\n", "<br>", -1), photoinfo.Photo.ID)
 
 		feed.Items = append(feed.Items, &feeds.Item{
 			Id:          fmt.Sprintf("https://photos.toomore.net/p/%s", v.ID),
@@ -338,6 +339,7 @@ func main() {
 	http.HandleFunc("/sitemap/", sitemap)
 	http.HandleFunc("/rss", rss)
 	http.HandleFunc("/atom", atom)
+	http.HandleFunc("/fr", notFound)
 	//http.Handle("/static", http.FileServer(http.Dir("./static/")))
 	serveSingle("/favicon.ico", "favicon.ico")
 	serveSingle("/jquery.unveil.min.js", "jquery.unveil.min.js")
