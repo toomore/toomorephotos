@@ -175,10 +175,14 @@ func index(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("ETag", etagStr)
 		w.Header().Set("Cache-Control", "max-age=120")
 		result := fromSearch(rTags[modValue])
+		min := 30
+		if len(result) < 30 {
+			min = len(result)
+		}
 		data := struct {
 			R []jsonstruct.Photo
 			L []jsonstruct.Photo
-		}{result, result[:30]}
+		}{result, result[:min]}
 		tplIndex.Execute(w, data)
 	}
 }
