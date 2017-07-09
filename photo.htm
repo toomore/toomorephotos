@@ -15,6 +15,9 @@
         <div class="by">
             <p>Photo by <a href="//www.flickr.com/photos/toomore/{{.ID}}">Toomore</a> / <a href="{{.License | licensesURL}}">{{.License | licensesName}}</a></p>
         </div>
+        <div>
+            <a data-pocket-label="pocket" data-pocket-count="none" class="pocket-btn" data-lang="en"></a>
+        </div>
         <div><a href="//maps.google.com/?q={{.Location.Latitude}},{{.Location.Longitude}}"><img width="300" height="200" src="//maps.googleapis.com/maps/api/staticmap?size=300x200&center={{.Location.Latitude}},{{.Location.Longitude}}&key=AIzaSyBWnlG1YSHLvCL3075oxLvXXidrzH57tTY&zoom=16&scale=2&maptype=hybrid"></a></div>
         <div>
 			<!-- photos -->
@@ -43,6 +46,10 @@
     <link rel="canonical" href="https://photos.toomore.net/p/{{.ID}}-{{.Title.Content | replaceHover }}">
     <link rel="amphtml" href="https://photos.toomore.net/p/amp/{{.ID}}-{{.Title.Content | replaceHover }}">
     <link rel="copyright" href="{{.License | licensesURL}}">
+{{- end}}
+
+{{define "js"}}
+    <script type="text/javascript">!function(d,i){if(!d.getElementById(i)){var j=d.createElement("script");j.id=i;j.src="https://widgets.getpocket.com/v1/j/btn.js?v=1";var w=d.getElementById(i);d.body.appendChild(j);}}(document,"pocket-btn-js");</script>
 {{- end}}
 
 {{define "jsonld" -}}
