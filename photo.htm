@@ -46,6 +46,7 @@
     <link rel="canonical" href="https://photos.toomore.net/p/{{.ID}}-{{.Title.Content | replaceHover }}">
     <link rel="amphtml" href="https://photos.toomore.net/p/amp/{{.ID}}-{{.Title.Content | replaceHover }}">
     <link rel="copyright" href="{{.License | licensesURL}}">
+    <link rel="prefetch" href="https://www.flickr.com/photos/toomore/{{.ID}}">
 {{- end}}
 
 {{define "js"}}
