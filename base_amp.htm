@@ -15,6 +15,7 @@
     <link rel="dns-prefetch" href="//ajax.googleapis.com/">
     <script async src="https://cdn.ampproject.org/v0.js"></script>
     <script async custom-element="amp-analytics" src="https://cdn.ampproject.org/v0/amp-analytics-0.1.js"></script>
+    <script async custom-element="amp-auto-ads" src="https://cdn.ampproject.org/v0/amp-auto-ads-0.1.js"></script>
     <style amp-boilerplate>body{-webkit-animation:-amp-start 8s steps(1,end) 0s 1 normal both;-moz-animation:-amp-start 8s steps(1,end) 0s 1 normal both;-ms-animation:-amp-start 8s steps(1,end) 0s 1 normal both;animation:-amp-start 8s steps(1,end) 0s 1 normal both}@-webkit-keyframes -amp-start{from{visibility:hidden}to{visibility:visible}}@-moz-keyframes -amp-start{from{visibility:hidden}to{visibility:visible}}@-ms-keyframes -amp-start{from{visibility:hidden}to{visibility:visible}}@-o-keyframes -amp-start{from{visibility:hidden}to{visibility:visible}}@keyframes -amp-start{from{visibility:hidden}to{visibility:visible}}</style><noscript><style amp-boilerplate>body{-webkit-animation:none;-moz-animation:none;-ms-animation:none;animation:none}</style></noscript>
 {{- end}}
     <style amp-custom>
@@ -33,6 +34,7 @@ a{color:#fff}.photo div.tag{color:#aaa}.photo div.desc a{color:#f1f;font-weight:
 </head>
 <body>
     {{block "content" .}}{{end}}
+    <amp-auto-ads type="adsense" data-ad-client="ca-pub-8083183430499740"></amp-auto-ads>
     <amp-analytics type="googleanalytics">
 		<script type="application/json">
 		{
