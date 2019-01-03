@@ -95,7 +95,7 @@ var funcs = template.FuncMap{
 func init() {
 	getTags(&rTags)
 	tplIndex = template.Must(template.Must(template.ParseFiles("./base.htm")).Funcs(funcs).ParseFiles("./index.htm"))
-	tplPhoto = template.Must(template.Must(template.ParseFiles("./base.htm")).Funcs(funcs).ParseFiles("./photo.htm"))
+	tplPhoto = template.Must(template.Must(template.ParseFiles("./base_2019.html")).Funcs(funcs).ParseFiles("./photo.htm"))
 	tplPhotoAMP = template.Must(template.Must(template.ParseFiles("./base_amp.htm")).Funcs(funcs).ParseFiles("./photo_amp.htm"))
 	tplSitemap = template.Must(template.ParseFiles("./sitemap.htm"))
 
