@@ -338,6 +338,10 @@ func notFound(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Maybe not in this timeline ... (35.701099, 139.738557)"))
 }
 
+func health(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+
 func main() {
 	flag.Parse()
 	http.HandleFunc("/", index)
@@ -346,6 +350,7 @@ func main() {
 	http.HandleFunc("/rss", rss)
 	http.HandleFunc("/atom", atom)
 	http.HandleFunc("/fr", notFound)
+	http.HandleFunc("/health", health)
 	//http.Handle("/static", http.FileServer(http.Dir("./static/")))
 	serveSingle("/favicon.ico", "favicon.ico")
 	serveSingle("/jquery.unveil.min.js", "jquery.unveil.min.js")
