@@ -1,0 +1,10 @@
+github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
+github.com/gorilla/feeds v1.1.0 h1:pcgLJhbdYgaUESnj3AmXPcB7cS3vy63+jC/TI14AGXk=
+github.com/gorilla/feeds v1.1.0/go.mod h1:Nk0jZrvPFZX1OBe5NPiddPw7CfwF6Q9eqzaBbaightA=
+github.com/mattn/go-colorable v0.1.1/go.mod h1:FuOcm+DKB9mbwrcAfNl7/TZVBZ6rcnceauSikq3lYCQ=
+github.com/mattn/go-isatty v0.0.5/go.mod h1:Iq45c/XA43vh69/j3iqttzPXn0bhXyGjM0Hdxcsrc5s=
+github.com/mattn/go-isatty v0.0.7/go.mod h1:Iq45c/XA43vh69/j3iqttzPXn0bhXyGjM0Hdxcsrc5s=
+github.com/toomore/lazyflickrgo v1.0.0 h1:Jt6imqNwmFlT/xsOXBTU2cjK2MVNZcrcR5eZPlyqRs4=
+github.com/toomore/lazyflickrgo v1.0.0/go.mod h1:NjyzIVhRQkVL/NepZbnAwIyw3M8SnFufu2h1r2nvxZI=
+github.com/toomore/lazytumblr v1.0.0/go.mod h1:GdW9jnqa6rZbVCuCKn26FMKIPkS4JXPhFIQwuvPwoAA=
+golang.org/x/sys v0.0.0-20190222072716-a9d3bda3a223/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
