@@ -8,12 +8,12 @@
         <p>{{.Description.Content | isHTML}}</p>
         <p class="align-center"><small>{{range .Tags.Tag }}<span>#{{.Raw}}</span> {{end}}</small></p>
         <p class="align-center"><small>Photo by <a href="//www.flickr.com/photos/toomore/{{.ID}}">Toomore</a> / <a href="{{.License | licensesURL}}">{{.License | licensesName}}</a></small></p>
-        <ins class="adsbygoogle"
+        <p><ins class="adsbygoogle"
              style="display:block"
              data-ad-client="ca-pub-8083183430499740"
              data-ad-slot="3449177341"
              data-ad-format="link"
-             data-full-width-responsive="true"></ins>
+             data-full-width-responsive="true"></ins></p>
         <p class="align-center"><a href="//maps.google.com/?q={{.Location.Latitude}},{{.Location.Longitude}}"><img width="300" height="200" style="border-radius:3px;" src="//maps.googleapis.com/maps/api/staticmap?size=300x200&center={{.Location.Latitude}},{{.Location.Longitude}}&key=AIzaSyBWnlG1YSHLvCL3075oxLvXXidrzH57tTY&zoom=16&scale=2&maptype=hybrid"></a></p>
         <div>
 			<!-- photos -->
