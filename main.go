@@ -109,7 +109,8 @@ func init() {
 		if data.URL == "" {
 			data.URL = "https://toomore.net/"
 		}
-		licenses[data.ID] = data
+		licenseID := strconv.FormatInt(data.ID, 10)
+		licenses[licenseID] = data
 	}
 	log.Printf("Licenses: %+v", licenses)
 	hashCache = make(map[string]string)
