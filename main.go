@@ -356,6 +356,7 @@ func main() {
 	serveSingle("/jquery.unveil.min.js", "jquery.unveil.min.js")
 	serveSingle("/base_min.css", "base_min.css")
 	serveSingle("/base_amp_min.css", "base_amp_min.css")
+	serveSingle("/base_photo_min.css", "base_photo_min.css")
 	serveSingle("/robots.txt", "robots.txt")
 	log.Println("HTTP Port:", *httpPort)
 	log.Println(http.ListenAndServe(*httpPort, nil))

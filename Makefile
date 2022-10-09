@@ -6,6 +6,7 @@ minify:
 	minify -o ./jquery.unveil.min.js ./jquery.unveil.js
 	minify -o ./base_min.css ./base.css
 	minify -o ./base_amp_min.css ./base_amp.css
+	minify -o ./base_photo_min.css ./base_photo.css
 
 stop:
 	#ps aux | grep ./toomorephotos_min | awk {'print $$2'} | xargs sudo kill -9

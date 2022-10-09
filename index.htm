@@ -6,7 +6,7 @@
 {{define "content"}}
     <div class="wall" style="text-align:center;">
         {{range .R}}
-        {{if .Ispublic}}<a href="/p/{{.ID}}-{{.Title | replaceHover}}"><img alt="{{.Title}} Photo by Toomore" data-src="/f/q/{{.Farm}}/{{.Server}}/{{.Secret}}/{{.ID}}.jpg"></a>{{end}}{{end}}
+        {{if .Ispublic}}<a href="/p/{{.ID}}-{{.Title | replaceHover}}"><img loading="lazy" alt="{{.Title}} Photo by Toomore" src="/f/q/{{.Farm}}/{{.Server}}/{{.Secret}}/{{.ID}}.jpg"></a>{{end}}{{end}}
     </div>
     <div class="gcse-searchbox-only"></div>
     <div>
@@ -22,11 +22,6 @@
 
 {{define "js"}}
     <script async src='https://cse.google.com/cse.js?cx=partner-pub-8083183430499740:8193882340'></script>
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
-    <script src="/jquery.unveil.min.js"></script>
-    <script defer="defer">
-        $(function() { $(".wall").find("img").unveil(300); });
-    </script>
 {{end}}
 
 {{define "og" -}}

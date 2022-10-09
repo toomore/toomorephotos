@@ -1,6 +1,7 @@
 {{define "content"}}
         <p style="margin-bottom:5px;"><a href="//www.flickr.com/photos/toomore/{{.ID}}">
             <img style="border-radius:3px;"
+            loading="lazy"
             alt="{{.Title.Content}} {{.Description.Content | isAltDesc}} Photo by Toomore"
             src="/f/b/{{.Farm}}/{{.Server}}/{{.Secret}}/{{.ID}}.jpg">
         </a></p>
