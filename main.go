@@ -8,7 +8,6 @@ import (
 	"hash"
 	"html/template"
 	"io"
-	"io/ioutil"
 	"log"
 	"math"
 	"net/http"
@@ -16,6 +15,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gorilla/feeds"
@@ -35,15 +35,19 @@ var (
 	tplSitemap    *template.Template
 	userID        string
 	hashCache     map[string]string
+
+	feedCache   *feeds.Feed
+	feedCacheAt time.Time
+	feedCacheMu sync.RWMutex
+	feedCacheTTL = 10 * time.Minute
 )
 
 func getTags(result *[]string) {
 	file, err := os.Open("./tags.txt")
-	defer file.Close()
-
 	if err != nil {
-		log.Panic(err)
+		log.Fatalf("無法讀取 tags.txt，請確認檔案存在並編輯加入至少一個標籤: %v", err)
 	}
+	defer file.Close()
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		*result = append(*result, scanner.Text())
@@ -94,11 +98,20 @@ var funcs = template.FuncMap{
 
 func init() {
 	getTags(&rTags)
+	if len(rTags) == 0 {
+		log.Fatal("tags.txt 為空，請編輯加入至少一個標籤")
+	}
 	tplIndex = template.Must(template.Must(template.ParseFiles("./base.htm")).Funcs(funcs).ParseFiles("./index.htm"))
 	tplPhoto = template.Must(template.Must(template.ParseFiles("./base_2019.html")).Funcs(funcs).ParseFiles("./photo.htm"))
 	tplPhotoAMP = template.Must(template.Must(template.ParseFiles("./base_amp.htm")).Funcs(funcs).ParseFiles("./photo_amp.htm"))
 	tplSitemap = template.Must(template.ParseFiles("./sitemap.htm"))
 
+	requiredEnv := []string{"FLICKRAPIKEY", "FLICKRSECRET", "FLICKRUSERTOKEN", "FLICKRUSER"}
+	for _, key := range requiredEnv {
+		if os.Getenv(key) == "" {
+			log.Fatalf("缺少必要環境變數 %s，請設定後再啟動", key)
+		}
+	}
 	f = flickr.NewFlickr(os.Getenv("FLICKRAPIKEY"), os.Getenv("FLICKRSECRET"))
 	f.AuthToken = os.Getenv("FLICKRUSERTOKEN")
 	userID = os.Getenv("FLICKRUSER")
@@ -136,7 +149,7 @@ func fromSearch(tags string) []jsonstruct.Photo {
 }
 
 func serveSingle(pattern string, filename string) {
-	if file, err := ioutil.ReadFile(filename); err == nil {
+	if file, err := os.ReadFile(filename); err == nil {
 		h := md5.New()
 		h.Write(file)
 		hashCache[filename] = fmt.Sprintf("W/\"%x\"", h.Sum(nil))
@@ -184,7 +197,10 @@ func index(w http.ResponseWriter, r *http.Request) {
 			R []jsonstruct.Photo
 			L []jsonstruct.Photo
 		}{result, result[:min]}
-		tplIndex.Execute(w, data)
+		if err := tplIndex.Execute(w, data); err != nil {
+			log.Printf("template execute error: %v", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		}
 	}
 }
 
@@ -198,7 +214,7 @@ func photo(w http.ResponseWriter, r *http.Request) {
 	logs(r, "")
 	match := photoPageExpr.FindStringSubmatch(r.RequestURI)
 	var photono string
-	if len(match) >= 2 {
+	if len(match) >= 3 {
 		photono = match[2]
 	}
 
@@ -232,7 +248,10 @@ func photo(w http.ResponseWriter, r *http.Request) {
 	} else {
 		w.Header().Set("ETag", etagStr)
 		if match[1] == "" {
-			tplPhoto.Execute(w, photoinfo.Photo)
+			if err := tplPhoto.Execute(w, photoinfo.Photo); err != nil {
+				log.Printf("template execute error: %v", err)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			}
 		} else {
 			var width int64
 			var height int64
@@ -245,7 +264,10 @@ func photo(w http.ResponseWriter, r *http.Request) {
 					break
 				}
 			}
-			tplPhotoAMP.Execute(w, ampphoto{P: photoinfo, Width: width, Height: height})
+			if err := tplPhotoAMP.Execute(w, ampphoto{P: photoinfo, Width: width, Height: height}); err != nil {
+				log.Printf("template execute error: %v", err)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			}
 		}
 	}
 }
@@ -268,13 +290,10 @@ func createFeeds(data []jsonstruct.Photo) *feeds.Feed {
 		Author:      &feeds.Author{Name: "Toomore Chiang", Email: "toomore0929@gmail.com"},
 	}
 
-	var result []jsonstruct.Photo
-	allPhotos(&result)
-
 	var photoinfo jsonstruct.PhotosGetInfo
 	var times int
 	var updated time.Time
-	for i, v := range result[:100] {
+	for i, v := range data[:min(100, len(data))] {
 		photoinfo = f.PhotosGetInfo(v.ID)
 		times, _ = strconv.Atoi(photoinfo.Photo.Dates.Posted)
 		updated = time.Unix(int64(times), 0)
@@ -297,24 +316,53 @@ func createFeeds(data []jsonstruct.Photo) *feeds.Feed {
 	return feed
 }
 
-func rss(w http.ResponseWriter, r *http.Request) {
+func getCachedFeed() *feeds.Feed {
+	feedCacheMu.RLock()
+	if feedCache != nil && time.Since(feedCacheAt) < feedCacheTTL {
+		feed := feedCache
+		feedCacheMu.RUnlock()
+		return feed
+	}
+	feedCacheMu.RUnlock()
+
+	feedCacheMu.Lock()
+	defer feedCacheMu.Unlock()
+	if feedCache != nil && time.Since(feedCacheAt) < feedCacheTTL {
+		return feedCache
+	}
 	var result []jsonstruct.Photo
 	allPhotos(&result)
-	feed := feeds.Rss{Feed: createFeeds(result)}
-	rssfeed := feed.RssFeed()
+	feedCache = createFeeds(result)
+	feedCacheAt = time.Now()
+	return feedCache
+}
+
+func rss(w http.ResponseWriter, r *http.Request) {
+	feed := getCachedFeed()
+	rssFeed := feeds.Rss{Feed: feed}
+	rssfeed := rssFeed.RssFeed()
 	rssfeed.Language = "zh"
 
-	rss, _ := feeds.ToXML(rssfeed)
+	rss, err := feeds.ToXML(rssfeed)
+	if err != nil {
+		log.Printf("feeds.ToXML error: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 	w.Write([]byte(rss))
 }
 
 func atom(w http.ResponseWriter, r *http.Request) {
-	var result []jsonstruct.Photo
-	allPhotos(&result)
-	feed := feeds.Atom{Feed: createFeeds(result)}
-	rssfeed := feed.AtomFeed()
+	feed := getCachedFeed()
+	atomFeed := feeds.Atom{Feed: feed}
+	atomfeed := atomFeed.AtomFeed()
 
-	atom, _ := feeds.ToXML(rssfeed)
+	atom, err := feeds.ToXML(atomfeed)
+	if err != nil {
+		log.Printf("feeds.ToXML error: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 	w.Write([]byte(atom))
 }
 
@@ -329,7 +377,10 @@ func sitemap(w http.ResponseWriter, r *http.Request) {
 		R []jsonstruct.Photo
 		T []int
 	}{result, tags}
-	tplSitemap.Execute(w, data)
+	if err := tplSitemap.Execute(w, data); err != nil {
+		log.Printf("template execute error: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	}
 }
 
 func notFound(w http.ResponseWriter, r *http.Request) {
