@@ -235,7 +235,13 @@
     table[class=body] input, select, textarea {
       font-size: 16px; }
     table[class=body] .slogan {
-      font-size: 10pt !important; }}
+      font-size: 10pt !important; }
+    /* Extend related-photos to full width on mobile (fixes Safari iOS extra margins) */
+    .related-photos {
+      margin-left: -10px;
+      margin-right: -10px;
+      width: calc(100% + 20px);
+    }}
 
   /* -------------------------------------
       PRESERVE THESE STYLES IN THE HEAD
@@ -389,12 +395,14 @@
   ------------------------------------- */
   .related-photos {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
     justify-items: center;
+    min-width: 0;
   }
   .related-photos a {
     width: 100%;
+    min-width: 0;
   }
   .related-photos a img {
     border-radius: 3px;
