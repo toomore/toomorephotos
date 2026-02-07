@@ -383,3 +383,16 @@
   .photo-main-img.loaded {
     opacity: 1;
   }
+
+  /* -------------------------------------
+      RELATED PHOTOS
+  ------------------------------------- */
+  .related-photos a img {
+    border-radius: 3px;
+    width: 120px;
+    height: 120px;
+    object-fit: cover;
+  }
+  .related-photos a:hover img {
+    opacity: 0.9;
+  }

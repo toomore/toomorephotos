@@ -119,12 +119,18 @@ func (a *App) photo(w http.ResponseWriter, r *http.Request) {
 		if width > 0 && height > 0 {
 			paddingBottomPercent = float64(height) / float64(width) * 100
 		}
+		var tagRaws []string
+		for _, t := range photoinfo.Photo.Tags.Tag {
+			tagRaws = append(tagRaws, t.Raw)
+		}
+		relatedPhotos := a.getCachedRelatedPhotos(photono, tagRaws)
 		data := struct {
 			Photo                 interface{}
 			Width                 int64
 			Height                int64
 			PaddingBottomPercent  float64
-		}{photoinfo.Photo, width, height, paddingBottomPercent}
+			RelatedPhotos         []jsonstruct.Photo
+		}{photoinfo.Photo, width, height, paddingBottomPercent, relatedPhotos}
 		if err := a.TplPhoto.Execute(w, data); err != nil {
 			log.Printf("template execute error: %v", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)

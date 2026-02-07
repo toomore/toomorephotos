@@ -20,6 +20,14 @@
              data-ad-format="link"
              data-full-width-responsive="true"></ins></p>
         <p class="align-center"><a href="//maps.google.com/?q={{.Photo.Location.Latitude}},{{.Photo.Location.Longitude}}"><img width="300" height="200" style="border-radius:3px;" src="//maps.googleapis.com/maps/api/staticmap?size=300x200&center={{.Photo.Location.Latitude}},{{.Photo.Location.Longitude}}&key=AIzaSyBWnlG1YSHLvCL3075oxLvXXidrzH57tTY&zoom=16&scale=2&maptype=hybrid"></a></p>
+        {{if .RelatedPhotos}}
+        <p class="align-center"><small>更多同類型作品</small></p>
+        <div class="related-photos" style="text-align:center;">
+            {{range .RelatedPhotos}}
+            {{if .Ispublic}}<a href="/p/{{.ID}}-{{.Title | replaceHover}}"><img loading="lazy" alt="{{.Title}} Photo by Toomore" src="/f/q/{{.Farm}}/{{.Server}}/{{.Secret}}/{{.ID}}.jpg"></a>{{end}}
+            {{end}}
+        </div>
+        {{end}}
         <div>
 			<!-- photos -->
 			<ins class="adsbygoogle"

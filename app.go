@@ -48,6 +48,10 @@ type App struct {
 	photoSizesCache   map[string]photoSizesCacheEntry
 	photoSizesCacheMu sync.RWMutex
 	photoSizesCacheTTL time.Duration
+
+	relatedPhotosCache   map[string]relatedPhotosCacheEntry
+	relatedPhotosCacheMu sync.RWMutex
+	relatedPhotosCacheTTL time.Duration
 }
 
 type indexCacheEntry struct {
@@ -63,6 +67,11 @@ type photoCacheEntry struct {
 type photoSizesCacheEntry struct {
 	width     int64
 	height    int64
+	expiresAt time.Time
+}
+
+type relatedPhotosCacheEntry struct {
+	photos    []jsonstruct.Photo
 	expiresAt time.Time
 }
 
@@ -181,8 +190,10 @@ func NewApp() (*App, error) {
 		indexCacheTTL:   2 * time.Minute,
 		photoCache:        make(map[string]photoCacheEntry),
 		photoCacheTTL:     5 * time.Minute,
-		photoSizesCache:   make(map[string]photoSizesCacheEntry),
-		photoSizesCacheTTL: 5 * time.Minute,
+		photoSizesCache:     make(map[string]photoSizesCacheEntry),
+		photoSizesCacheTTL:  5 * time.Minute,
+		relatedPhotosCache:  make(map[string]relatedPhotosCacheEntry),
+		relatedPhotosCacheTTL: 5 * time.Minute,
 	}, nil
 }
 

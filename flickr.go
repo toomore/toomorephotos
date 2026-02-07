@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/toomore/lazyflickrgo/jsonstruct"
@@ -128,6 +129,52 @@ func (a *App) getCachedPhotosGetSizes(photoID string) (width, height int64, ok b
 		}
 	}
 	return 0, 0, false
+}
+
+func (a *App) getRelatedPhotos(photoID string, tagRaws []string) []jsonstruct.Photo {
+	if len(tagRaws) == 0 {
+		return nil
+	}
+	args := map[string]string{
+		"tags":     strings.Join(tagRaws, ","),
+		"tag_mode": "any",
+		"sort":     "date-posted-desc",
+		"user_id":  a.UserID,
+	}
+	var result []jsonstruct.Photo
+	for _, page := range a.Flickr.PhotosSearch(args) {
+		for _, p := range page.Photos.Photo {
+			if p.ID != photoID && p.Ispublic != 0 {
+				result = append(result, p)
+			}
+		}
+	}
+	const maxRelated = 12
+	if len(result) > maxRelated {
+		result = result[:maxRelated]
+	}
+	return result
+}
+
+func (a *App) getCachedRelatedPhotos(photoID string, tagRaws []string) []jsonstruct.Photo {
+	a.relatedPhotosCacheMu.RLock()
+	if ent, hit := a.relatedPhotosCache[photoID]; hit && time.Now().Before(ent.expiresAt) {
+		a.relatedPhotosCacheMu.RUnlock()
+		return ent.photos
+	}
+	a.relatedPhotosCacheMu.RUnlock()
+
+	a.relatedPhotosCacheMu.Lock()
+	defer a.relatedPhotosCacheMu.Unlock()
+	if ent, hit := a.relatedPhotosCache[photoID]; hit && time.Now().Before(ent.expiresAt) {
+		return ent.photos
+	}
+	result := a.getRelatedPhotos(photoID, tagRaws)
+	a.relatedPhotosCache[photoID] = relatedPhotosCacheEntry{
+		photos:    result,
+		expiresAt: time.Now().Add(a.relatedPhotosCacheTTL),
+	}
+	return result
 }
 
 func (a *App) allPhotos(result *[]jsonstruct.Photo) {
