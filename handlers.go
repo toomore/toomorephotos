@@ -115,11 +115,16 @@ func (a *App) photo(w http.ResponseWriter, r *http.Request) {
 		if w, h, ok := a.getCachedPhotosGetSizes(photono); ok {
 			width, height = w, h
 		}
+		paddingBottomPercent := 75.0 // 4:3 fallback
+		if width > 0 && height > 0 {
+			paddingBottomPercent = float64(height) / float64(width) * 100
+		}
 		data := struct {
-			Photo  interface{}
-			Width  int64
-			Height int64
-		}{photoinfo.Photo, width, height}
+			Photo                 interface{}
+			Width                 int64
+			Height                int64
+			PaddingBottomPercent  float64
+		}{photoinfo.Photo, width, height, paddingBottomPercent}
 		if err := a.TplPhoto.Execute(w, data); err != nil {
 			log.Printf("template execute error: %v", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)

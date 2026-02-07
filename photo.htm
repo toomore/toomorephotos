@@ -1,10 +1,12 @@
 {{define "content"}}
         <p style="margin-bottom:5px;"><a class="photo-blur-anchor" href="//www.flickr.com/photos/toomore/{{.Photo.ID}}">
-            <span class="photo-blur-wrapper" {{if and .Width .Height}}style="aspect-ratio:{{.Width}}/{{.Height}};"{{else}}style="aspect-ratio:4/3;"{{end}}>
-                <img class="photo-blur-placeholder" src="/f/m/{{.Photo.Farm}}/{{.Photo.Server}}/{{.Photo.Secret}}/{{.Photo.ID}}.jpg" alt="">
-                <img class="photo-main-img" {{if and .Width .Height}}width="{{.Width}}" height="{{.Height}}" {{end}}
-                    alt="{{.Photo.Title.Content}} {{.Photo.Description.Content | isAltDesc}} Photo by Toomore"
-                    src="/f/b/{{.Photo.Farm}}/{{.Photo.Server}}/{{.Photo.Secret}}/{{.Photo.ID}}.jpg">
+            <span class="photo-blur-wrapper" style="padding-bottom:{{.PaddingBottomPercent}}%;">
+                <span class="photo-blur-inner">
+                    <img class="photo-blur-placeholder" src="/f/m/{{.Photo.Farm}}/{{.Photo.Server}}/{{.Photo.Secret}}/{{.Photo.ID}}.jpg" alt="">
+                    <img class="photo-main-img" {{if and .Width .Height}}width="{{.Width}}" height="{{.Height}}" {{end}}
+                        alt="{{.Photo.Title.Content}} {{.Photo.Description.Content | isAltDesc}} Photo by Toomore"
+                        src="/f/b/{{.Photo.Farm}}/{{.Photo.Server}}/{{.Photo.Secret}}/{{.Photo.ID}}.jpg">
+                </span>
             </span>
         </a></p>
         <p class="align-right"><small>{{.Photo.Title.Content}}</small></p>
