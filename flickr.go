@@ -3,9 +3,11 @@ package main
 import (
 	"bufio"
 	"context"
+	"math/rand"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/toomore/lazyflickrgo/jsonstruct"
 )
@@ -112,25 +114,81 @@ func (a *App) getRelatedPhotos(photoID string, tagRaws []string) []jsonstruct.Ph
 	if len(tagRaws) == 0 {
 		return nil
 	}
+	const maxRelated = 12
+	const sameTagLimit = 8
+	const otherTagLimit = 4
+
+	// 1. Same-tag results
 	args := map[string]string{
 		"tags":     strings.Join(tagRaws, ","),
 		"tag_mode": "any",
 		"sort":     "date-posted-desc",
 		"user_id":  a.UserID,
 	}
-	var result []jsonstruct.Photo
+	var sameTag []jsonstruct.Photo
 	for _, page := range a.Flickr.PhotosSearch(args) {
 		for _, p := range page.Photos.Photo {
 			if p.ID != photoID && p.Ispublic != 0 {
-				result = append(result, p)
+				sameTag = append(sameTag, p)
 			}
 		}
 	}
-	const maxRelated = 12
-	if len(result) > maxRelated {
-		result = result[:maxRelated]
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(len(sameTag), func(i, j int) { sameTag[i], sameTag[j] = sameTag[j], sameTag[i] })
+	if len(sameTag) > sameTagLimit {
+		sameTag = sameTag[:sameTagLimit]
 	}
-	return result
+
+	// 2. Other tags (from a.Tags, excluding current photo's tags)
+	tagSet := make(map[string]bool)
+	for _, t := range tagRaws {
+		tagSet[t] = true
+	}
+	var otherTags []string
+	for _, t := range a.Tags {
+		if !tagSet[t] {
+			otherTags = append(otherTags, t)
+		}
+	}
+
+	var otherTag []jsonstruct.Photo
+	if len(otherTags) > 0 {
+		var h uint32
+		for _, c := range photoID {
+			h = h*31 + uint32(c)
+		}
+		pickTag := otherTags[int(h)%len(otherTags)]
+		otherArgs := map[string]string{
+			"tags":     pickTag,
+			"tag_mode": "all",
+			"sort":     "date-posted-desc",
+			"user_id":  a.UserID,
+		}
+		seen := make(map[string]bool)
+		for _, p := range sameTag {
+			seen[p.ID] = true
+		}
+	pageLoop:
+		for _, page := range a.Flickr.PhotosSearch(otherArgs) {
+			for _, p := range page.Photos.Photo {
+				if p.ID != photoID && p.Ispublic != 0 && !seen[p.ID] {
+					otherTag = append(otherTag, p)
+					seen[p.ID] = true
+					if len(otherTag) >= otherTagLimit {
+						break pageLoop
+					}
+				}
+			}
+		}
+	}
+
+	// 3. Merge and shuffle
+	merged := append(sameTag, otherTag...)
+	rand.Shuffle(len(merged), func(i, j int) { merged[i], merged[j] = merged[j], merged[i] })
+	if len(merged) > maxRelated {
+		merged = merged[:maxRelated]
+	}
+	return merged
 }
 
 func (a *App) getCachedRelatedPhotos(photoID string, tagRaws []string) []jsonstruct.Photo {
