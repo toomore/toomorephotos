@@ -1,5 +1,5 @@
 # Build stage
-FROM golang:1.21-alpine AS builder
+FROM golang:1.25-alpine AS builder
 WORKDIR /app
 
 COPY go.mod go.sum ./
@@ -16,7 +16,7 @@ RUN apk add --no-cache curl && \
 RUN CGO_ENABLED=0 go build -o toomorephotos .
 
 # Runtime stage
-FROM alpine:3.19
+FROM alpine:3.23
 WORKDIR /app
 
 RUN apk add --no-cache ca-certificates

@@ -1,6 +1,6 @@
 module github.com/toomore/toomorephotos
 
-go 1.21
+go 1.25
 
 require (
 	github.com/gorilla/feeds v1.1.1

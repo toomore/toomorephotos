@@ -14,7 +14,7 @@ services:
     volumes: ["./tags.txt:/app/tags.txt:ro"]
 
   redis:
-    image: redis:7-alpine
+    image: redis:8.4-alpine
     volumes:
       - redis_data:/data
 
