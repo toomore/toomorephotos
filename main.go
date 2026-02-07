@@ -6,13 +6,28 @@ import (
 	"net/http"
 )
 
-var httpPort = flag.String("p", ":8080", "HTTP port")
+var (
+	httpPort = flag.String("p", ":8080", "HTTP port")
+	doSync   = flag.Bool("sync", false, "執行 sync：從 Flickr 取得照片 metadata 寫入 DB 後退出")
+)
 
 func main() {
 	flag.Parse()
 	app, err := NewApp()
 	if err != nil {
 		log.Fatal(err)
+	}
+	defer func() {
+		if app.DB != nil {
+			app.DB.Close()
+		}
+	}()
+
+	if *doSync {
+		if err := runSync(app); err != nil {
+			log.Fatal(err)
+		}
+		return
 	}
 
 	http.HandleFunc("/", app.index)

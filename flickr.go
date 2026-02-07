@@ -7,7 +7,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/toomore/lazyflickrgo/jsonstruct"
 )
@@ -52,6 +51,12 @@ func (a *App) getCachedFromSearch(tag string) []jsonstruct.Photo {
 	if ok, _ := a.Cache.Get(ctx, key, &result); ok {
 		return result
 	}
+	if a.DB != nil {
+		if photos, err := a.DB.GetPhotosByTag(ctx, tag); err == nil && len(photos) > 0 {
+			_ = a.Cache.Set(ctx, key, photos, a.IndexCacheTTL)
+			return photos
+		}
+	}
 	result = a.fromSearch(tag)
 	_ = a.Cache.Set(ctx, key, result, a.IndexCacheTTL)
 	return result
@@ -64,8 +69,21 @@ func (a *App) getCachedPhotosGetInfo(photoID string) jsonstruct.PhotosGetInfo {
 	if ok, _ := a.Cache.Get(ctx, key, &info); ok {
 		return info
 	}
+	if a.DB != nil {
+		if dbInfo, _, _, ok := a.DB.GetPhoto(ctx, photoID); ok && dbInfo.Common.Stat == "ok" {
+			_ = a.Cache.Set(ctx, key, dbInfo, a.PhotoCacheTTL)
+			return dbInfo
+		}
+	}
 	info = a.Flickr.PhotosGetInfo(photoID)
 	_ = a.Cache.Set(ctx, key, info, a.PhotoCacheTTL)
+	if a.DB != nil && info.Common.Stat == "ok" {
+		if w, h, ok := a.getCachedPhotosGetSizes(photoID); ok {
+			_ = a.DB.UpsertPhoto(ctx, photoID, info, w, h)
+		} else {
+			_ = a.DB.UpsertPhoto(ctx, photoID, info, 0, 0)
+		}
+	}
 	return info
 }
 
@@ -82,6 +100,12 @@ func (a *App) getCachedPhotosGetSizes(photoID string) (width, height int64, ok b
 	var v photoSizesVal
 	if found, _ := a.Cache.Get(ctx, key, &v); found && v.Width > 0 && v.Height > 0 {
 		return v.Width, v.Height, true
+	}
+	if a.DB != nil {
+		if _, w, h, found := a.DB.GetPhoto(ctx, photoID); found && w > 0 && h > 0 {
+			_ = a.Cache.Set(ctx, key, photoSizesVal{Width: w, Height: h}, a.PhotoSizesCacheTTL)
+			return w, h, true
+		}
 	}
 	sizes := a.Flickr.PhotosGetSizes(photoID)
 	preferredLabels := []string{"Large", "Large 1024", "Large 1600", "Medium 800", "Medium 640"}
@@ -133,7 +157,6 @@ func (a *App) getRelatedPhotos(photoID string, tagRaws []string) []jsonstruct.Ph
 			}
 		}
 	}
-	rand.Seed(time.Now().UnixNano())
 	rand.Shuffle(len(sameTag), func(i, j int) { sameTag[i], sameTag[j] = sameTag[j], sameTag[i] })
 	if len(sameTag) > sameTagLimit {
 		sameTag = sameTag[:sameTagLimit]
@@ -198,6 +221,12 @@ func (a *App) getCachedRelatedPhotos(photoID string, tagRaws []string) []jsonstr
 	if ok, _ := a.Cache.Get(ctx, key, &result); ok {
 		return result
 	}
+	if a.DB != nil && len(tagRaws) > 0 {
+		if photos, err := a.DB.GetRelatedPhotos(ctx, photoID, tagRaws, a.Tags, 12); err == nil && len(photos) > 0 {
+			_ = a.Cache.Set(ctx, key, photos, a.RelatedPhotosCacheTTL)
+			return photos
+		}
+	}
 	result = a.getRelatedPhotos(photoID, tagRaws)
 	_ = a.Cache.Set(ctx, key, result, a.RelatedPhotosCacheTTL)
 	return result
@@ -220,6 +249,12 @@ func (a *App) getCachedAllPhotos() []jsonstruct.Photo {
 	var result []jsonstruct.Photo
 	if ok, _ := a.Cache.Get(ctx, key, &result); ok {
 		return result
+	}
+	if a.DB != nil {
+		if photos, err := a.DB.GetAllPhotos(ctx); err == nil && len(photos) > 0 {
+			_ = a.Cache.Set(ctx, key, photos, a.SitemapCacheTTL)
+			return photos
+		}
 	}
 	a.allPhotos(&result)
 	_ = a.Cache.Set(ctx, key, result, a.SitemapCacheTTL)

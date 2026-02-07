@@ -9,9 +9,27 @@ services:
       - FLICKRUSERTOKEN=${FLICKRUSERTOKEN}
       - FLICKRUSER=${FLICKRUSER}
       - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=${DATABASE_URL:-postgres://toomorephotos:toomorephotos@postgres:5432/toomorephotos?sslmode=disable}
     depends_on:
-      - redis
+      redis:
+        condition: service_started
+      postgres:
+        condition: service_healthy
     volumes: ["./tags.txt:/app/tags.txt:ro"]
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: toomorephotos
+      POSTGRES_PASSWORD: toomorephotos
+      POSTGRES_DB: toomorephotos
+    volumes:
+      - postgres_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U toomorephotos -d toomorephotos"]
+      interval: 2s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:8.4-alpine
@@ -20,3 +38,4 @@ services:
 
 volumes:
   redis_data:
+  postgres_data:

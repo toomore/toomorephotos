@@ -14,6 +14,7 @@ A Flickr photo gallery built with Go, supporting RSS/Atom feeds and sitemap.
 - **XML Sitemap**：供搜尋引擎索引 / XML sitemap for search engines
 - **ETag 快取**：靜態檔與頁面快取 / ETag caching for static files and pages
 - **響應式設計**：lazy loading 圖片 / Responsive design with lazy loading
+- **本地資料庫**：可選 PostgreSQL 儲存照片 metadata，減少對 Flickr API 依賴 / Optional PostgreSQL for local photo metadata storage
 
 ---
 
@@ -58,6 +59,7 @@ export FLICKRUSER=...
 | FLICKRUSERTOKEN | Flickr User Token |
 | FLICKRUSER | Flickr User ID |
 | REDIS_URL | (Optional) Redis URL for persistent cache, e.g. `redis://localhost:6379`. If not set, uses in-memory cache. |
+| DATABASE_URL | (Optional) PostgreSQL URL for local photo metadata. If set, app uses DB first and fallback to Flickr API. If not set, uses Flickr + cache only. |
 
 ---
 
@@ -99,6 +101,8 @@ docker compose up --build -d
 
 Runs app on port 8080 with Redis-backed cache (persists across restarts). Uses built-in default tag "photo" unless you mount custom tags.txt.
 
+docker-compose 會自動啟動 PostgreSQL；首次啟動時 app 會建立 `photos`、`photo_tags` 表。需執行 sync 將 Flickr 照片 metadata 寫入 DB。
+
 ---
 
 ## 執行與管理 / Run & Manage
@@ -107,11 +111,37 @@ Runs app on port 8080 with Redis-backed cache (persists across restarts). Uses b
 |---------|-------------|
 | `./toomorephotos` | Single instance (port 8080) |
 | `./toomorephotos -p :8081` | Specify port |
+| `./toomorephotos -sync` | 從 Flickr 同步照片 metadata 至 DB 後退出 / Sync photo metadata from Flickr to DB, then exit |
 | `REDIS_URL=redis://localhost:6379 ./toomorephotos` | Use Redis cache |
 | `./toomorephotos >> ./log.log 2>&1 &` | Run in background |
 | `make start` | Start 4 instances (ports 8080–8083) |
 | `make stop` | Stop all instances |
 | `make restart` | Restart |
+
+### Sync 指令 / Sync Command
+
+有設定 `DATABASE_URL` 時，可執行 sync 將 Flickr 照片 metadata 寫入本地 DB：
+
+```bash
+# Docker Compose
+docker compose run --rm app ./toomorephotos -sync
+
+# 本地（需 DATABASE_URL 與 Flickr 環境變數）
+DATABASE_URL=postgres://... ./toomorephotos -sync
+```
+
+**建議**：應只從單一 instance 執行 sync，避免同時執行。可定期以 cron 或 systemd timer 排程。
+
+### 資料庫備份 / Database Backup
+
+若 DB 為 metadata 唯一來源，建議定期備份：
+
+```bash
+# pg_dump
+docker compose exec postgres pg_dump -U toomorephotos toomorephotos > backup.sql
+
+# 或備份 postgres 的 volume
+```
 
 ---
 
@@ -119,11 +149,13 @@ Runs app on port 8080 with Redis-backed cache (persists across restarts). Uses b
 
 | File | Responsibility |
 |------|----------------|
-| `main.go` | Entry point, route registration |
-| `app.go` | App struct, NewApp |
+| `main.go` | Entry point, route registration, -sync flag |
+| `app.go` | App struct, NewApp, DB init |
 | `handlers.go` | HTTP handlers |
 | `feed.go` | RSS/Atom, feed cache |
-| `flickr.go` | Flickr API, getTags |
+| `flickr.go` | Flickr API, getTags, DB-first logic |
+| `sync.go` | Sync: Flickr → DB |
+| `db/` | PostgreSQL schema, photos CRUD |
 
 See [CLAUDE.md](CLAUDE.md) for full architecture documentation.
 

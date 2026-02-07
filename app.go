@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"html/template"
 	"log"
@@ -13,6 +14,7 @@ import (
 	"github.com/toomore/lazyflickrgo/flickr"
 	"github.com/toomore/lazyflickrgo/jsonstruct"
 	"github.com/toomore/toomorephotos/cache"
+	"github.com/toomore/toomorephotos/db"
 )
 
 type App struct {
@@ -27,6 +29,7 @@ type App struct {
 	PhotoPageExpr *regexp.Regexp
 
 	Cache cache.Cache
+	DB    *db.DB
 
 	IndexCacheTTL        time.Duration
 	PhotoCacheTTL        time.Duration
@@ -135,6 +138,21 @@ func NewApp() (*App, error) {
 		return nil, err
 	}
 
+	var database *db.DB
+	if url := os.Getenv("DATABASE_URL"); url != "" {
+		var err error
+		database, err = db.Open(context.Background(), url)
+		if err != nil {
+			return nil, fmt.Errorf("DATABASE_URL 連線失敗: %w", err)
+		}
+		if err := database.InitSchema(context.Background()); err != nil {
+			database.Close()
+			return nil, fmt.Errorf("DB schema 初始化失敗: %w", err)
+		}
+	} else {
+		log.Println("DB: DATABASE_URL 未設定，跳過本地資料庫")
+	}
+
 	return &App{
 		Flickr:               f,
 		Licenses:             licenses,
@@ -146,6 +164,7 @@ func NewApp() (*App, error) {
 		HashCache:            make(map[string]string),
 		PhotoPageExpr:        regexp.MustCompile(`/p/([0-9]+)-?(.+)?`),
 		Cache:                cache.New(),
+		DB:                   database,
 		IndexCacheTTL:        10 * time.Minute,
 		PhotoCacheTTL:        30 * 24 * time.Hour,     // 30 天
 		PhotoSizesCacheTTL:   365 * 24 * time.Hour,    // 365 天

@@ -130,22 +130,33 @@ make restart
 ### 快取機制
 
 - **Redis（選用）**: 設定 `REDIS_URL` 時使用 Redis 快取，重啟後仍保留；未設定則使用記憶體快取
+- **PostgreSQL（選用）**: 設定 `DATABASE_URL` 時使用本地 DB 儲存照片 metadata；讀取時 DB 優先，無資料時 fallback 至 Flickr API，fallback 取得後寫回 DB
 - **快取項目與 TTL**: 照片 info 30 天、照片尺寸 365 天、相關作品 1h、首頁 10min、sitemap/feed 30min
 - **首頁**: 使用 ETag 基於 tag 內容產生
 - **照片頁**: ETag 基於照片標題和描述的 MD5
 - **靜態檔案**: ETag 基於檔案內容的 MD5
 - 前端使用 jquery.unveil.js 實作 lazy loading
 
+### 本地資料庫（db 套件）
+
+- `db/db.go`: 連線、InitSchema（啟動時建表，CREATE TABLE IF NOT EXISTS）
+- `db/photos.go`: GetPhoto、UpsertPhoto、GetPhotosByTag、GetAllPhotos、GetRelatedPhotos
+- `photos` 表：photo_id, info_json (JSONB), width, height, fetched_at
+- `photo_tags` 表：photo_id, tag（供 tag 查詢）
+- `./toomorephotos -sync`: 從 Flickr 同步 metadata 至 DB
+
 ### Docker Compose
 
-- `docker compose up --build` 啟動 app + Redis
+- `docker compose up --build` 啟動 app + Redis + PostgreSQL
 - 需提供 `tags.txt`（volume 掛載）及 Flickr 環境變數
+- 首次啟動自動建表；可用 `docker compose run --rm app ./toomorephotos -sync` 同步照片
 
 ### 依賴套件
 
 - `github.com/toomore/lazyflickrgo`: Flickr API 客戶端
 - `github.com/gorilla/feeds`: RSS/Atom feed 生成
 - `github.com/redis/go-redis/v9`: Redis 客戶端（選用）
+- `github.com/jackc/pgx/v5`: PostgreSQL 客戶端（選用）
 
 ## 注意事項
 
