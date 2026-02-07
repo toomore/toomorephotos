@@ -236,12 +236,7 @@
       font-size: 16px; }
     table[class=body] .slogan {
       font-size: 10pt !important; }
-    /* Extend related-photos to full width on mobile (fixes Safari iOS extra margins) */
-    .related-photos {
-      margin-left: -10px;
-      margin-right: -10px;
-      width: calc(100% + 20px);
-    }}
+  }
 
   /* -------------------------------------
       PRESERVE THESE STYLES IN THE HEAD
@@ -399,6 +394,8 @@
     gap: 8px;
     justify-items: center;
     min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
   }
   .related-photos a {
     width: 100%;
