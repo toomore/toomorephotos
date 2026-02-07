@@ -236,6 +236,11 @@
       font-size: 16px; }
     table[class=body] .slogan {
       font-size: 10pt !important; }
+    /* 內文中的連結繼承父層字體，與周圍文字一致 */
+    table[class=body] p a,
+    table[class=body] small a,
+    table[class=body] li a {
+      font-size: inherit !important; }
   }
 
   /* -------------------------------------
