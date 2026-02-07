@@ -101,7 +101,7 @@ func (a *App) photo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if photoinfo.Photo.Owner.Nsid != "92438116@N00" {
+	if photoinfo.Photo.Owner.Nsid != a.UserID {
 		a.notFound(w, r)
 		return
 	}
