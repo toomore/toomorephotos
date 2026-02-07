@@ -344,3 +344,38 @@
   table.itemlist td .closed {
       color: #898989;
   }
+
+  /* -------------------------------------
+      PHOTO PAGE BLUR-UP
+  ------------------------------------- */
+  .photo-blur-anchor {
+    display: block;
+  }
+  .photo-blur-wrapper {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    border-radius: 3px;
+    width: 100%;
+  }
+  .photo-blur-placeholder {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: blur(10px);
+    transform: scale(1.05);
+  }
+  .photo-main-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    opacity: 0;
+    transition: opacity 0.4s ease-in;
+  }
+  .photo-main-img.loaded {
+    opacity: 1;
+  }

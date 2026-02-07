@@ -1,8 +1,11 @@
 {{define "content"}}
-        <p style="margin-bottom:5px;"><a href="//www.flickr.com/photos/toomore/{{.Photo.ID}}">
-            <img {{if and .Width .Height}}width="{{.Width}}" height="{{.Height}}" {{end}}style="border-radius:3px; max-width:100%; height:auto;{{if not (and .Width .Height)}} aspect-ratio:4/3;{{end}}"
-            alt="{{.Photo.Title.Content}} {{.Photo.Description.Content | isAltDesc}} Photo by Toomore"
-            src="/f/b/{{.Photo.Farm}}/{{.Photo.Server}}/{{.Photo.Secret}}/{{.Photo.ID}}.jpg">
+        <p style="margin-bottom:5px;"><a class="photo-blur-anchor" href="//www.flickr.com/photos/toomore/{{.Photo.ID}}">
+            <span class="photo-blur-wrapper" {{if and .Width .Height}}style="aspect-ratio:{{.Width}}/{{.Height}};"{{else}}style="aspect-ratio:4/3;"{{end}}>
+                <img class="photo-blur-placeholder" src="/f/m/{{.Photo.Farm}}/{{.Photo.Server}}/{{.Photo.Secret}}/{{.Photo.ID}}.jpg" alt="">
+                <img class="photo-main-img" {{if and .Width .Height}}width="{{.Width}}" height="{{.Height}}" {{end}}
+                    alt="{{.Photo.Title.Content}} {{.Photo.Description.Content | isAltDesc}} Photo by Toomore"
+                    src="/f/b/{{.Photo.Farm}}/{{.Photo.Server}}/{{.Photo.Secret}}/{{.Photo.ID}}.jpg">
+            </span>
         </a></p>
         <p class="align-right"><small>{{.Photo.Title.Content}}</small></p>
         <p>{{.Photo.Description.Content | isHTML}}</p>
@@ -42,10 +45,21 @@
     <link rel="canonical" href="https://photos.toomore.net/p/{{.Photo.ID}}-{{.Photo.Title.Content | replaceHover }}">
     <link rel="copyright" href="{{.Photo.License | licensesURL}}">
     <link rel="prefetch" href="https://www.flickr.com/photos/toomore/{{.Photo.ID}}">
+    <link rel="preload" as="image" href="/f/m/{{.Photo.Farm}}/{{.Photo.Server}}/{{.Photo.Secret}}/{{.Photo.ID}}.jpg">
     <link rel="preload" as="image" href="/f/b/{{.Photo.Farm}}/{{.Photo.Server}}/{{.Photo.Secret}}/{{.Photo.ID}}.jpg">
 {{- end}}
 
-{{define "js"}}{{- end}}
+{{define "js"}}
+<script>
+(function(){
+  var img = document.querySelector('.photo-main-img');
+  if (!img) return;
+  function show() { img.classList.add('loaded'); }
+  if (img.complete) show();
+  else img.addEventListener('load', show);
+})();
+</script>
+{{- end}}
 
 {{define "jsonld" -}}
 <script type="application/ld+json">
