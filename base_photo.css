@@ -395,7 +395,6 @@
   }
   .related-photos a {
     width: 100%;
-    max-width: 120px;
   }
   .related-photos a img {
     border-radius: 3px;
