@@ -96,19 +96,35 @@ func (a *App) getCachedPhotosGetSizes(photoID string) (width, height int64, ok b
 		return ent.width, ent.height, true
 	}
 	sizes := a.Flickr.PhotosGetSizes(photoID)
-	for _, s := range sizes.Sizes.Size {
-		if s.Label == "Large" || s.Label == "Large 1024" {
-			w, errW := strconv.ParseInt(string(s.Width), 10, 64)
-			h, errH := strconv.ParseInt(string(s.Height), 10, 64)
-			if errW == nil && errH == nil && w > 0 && h > 0 {
-				a.photoSizesCache[photoID] = photoSizesCacheEntry{
-					width:     w,
-					height:    h,
-					expiresAt: time.Now().Add(a.photoSizesCacheTTL),
+	preferredLabels := []string{"Large", "Large 1024", "Large 1600", "Medium 800", "Medium 640"}
+	for _, label := range preferredLabels {
+		for _, s := range sizes.Sizes.Size {
+			if s.Label == label {
+				w, errW := strconv.ParseInt(string(s.Width), 10, 64)
+				h, errH := strconv.ParseInt(string(s.Height), 10, 64)
+				if errW == nil && errH == nil && w > 0 && h > 0 {
+					a.photoSizesCache[photoID] = photoSizesCacheEntry{
+						width:     w,
+						height:    h,
+						expiresAt: time.Now().Add(a.photoSizesCacheTTL),
+					}
+					return w, h, true
 				}
-				return w, h, true
+				break
 			}
-			break
+		}
+	}
+	// Fallback: use first available size with valid dimensions
+	for _, s := range sizes.Sizes.Size {
+		w, errW := strconv.ParseInt(string(s.Width), 10, 64)
+		h, errH := strconv.ParseInt(string(s.Height), 10, 64)
+		if errW == nil && errH == nil && w > 0 && h > 0 {
+			a.photoSizesCache[photoID] = photoSizesCacheEntry{
+				width:     w,
+				height:    h,
+				expiresAt: time.Now().Add(a.photoSizesCacheTTL),
+			}
+			return w, h, true
 		}
 	}
 	return 0, 0, false

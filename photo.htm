@@ -1,9 +1,9 @@
 {{define "content"}}
         <p style="margin-bottom:5px;"><a class="photo-blur-anchor" href="//www.flickr.com/photos/toomore/{{.Photo.ID}}">
-            <span class="photo-blur-wrapper" style="padding-bottom:{{.PaddingBottomPercent}}%;">
+            <span class="photo-blur-wrapper" style="padding-bottom:{{.PaddingBottomPercent}}%;" data-width="{{.Width}}" data-height="{{.Height}}" data-padding-bottom="{{.PaddingBottomPercent}}">
                 <span class="photo-blur-inner">
                     <img class="photo-blur-placeholder" src="/f/m/{{.Photo.Farm}}/{{.Photo.Server}}/{{.Photo.Secret}}/{{.Photo.ID}}.jpg" alt="">
-                    <img class="photo-main-img" {{if and .Width .Height}}width="{{.Width}}" height="{{.Height}}" {{end}}
+                    <img class="photo-main-img"
                         alt="{{.Photo.Title.Content}} {{.Photo.Description.Content | isAltDesc}} Photo by Toomore"
                         src="/f/b/{{.Photo.Farm}}/{{.Photo.Server}}/{{.Photo.Secret}}/{{.Photo.ID}}.jpg">
                 </span>
