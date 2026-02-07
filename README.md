@@ -57,6 +57,7 @@ export FLICKRUSER=...
 | FLICKRSECRET | Flickr API Secret |
 | FLICKRUSERTOKEN | Flickr User Token |
 | FLICKRUSER | Flickr User ID |
+| REDIS_URL | (Optional) Redis URL for persistent cache, e.g. `redis://localhost:6379`. If not set, uses in-memory cache. |
 
 ---
 
@@ -67,12 +68,32 @@ export FLICKRUSER=...
 
 ---
 
+## Docker Compose
+
+```bash
+# 1. Set environment variables (or use .env file)
+export FLICKRAPIKEY=...
+export FLICKRSECRET=...
+export FLICKRUSERTOKEN=...
+export FLICKRUSER=...
+
+# 2. (Optional) Create tags.txt and uncomment volumes in docker-compose.yml for custom tags
+
+# 3. Start app + Redis
+docker compose up --build -d
+```
+
+Runs app on port 8080 with Redis-backed cache (persists across restarts). Uses built-in default tag "photo" unless you mount custom tags.txt.
+
+---
+
 ## 執行與管理 / Run & Manage
 
 | Command | Description |
 |---------|-------------|
 | `./toomorephotos` | Single instance (port 8080) |
 | `./toomorephotos -p :8081` | Specify port |
+| `REDIS_URL=redis://localhost:6379 ./toomorephotos` | Use Redis cache |
 | `./toomorephotos >> ./log.log 2>&1 &` | Run in background |
 | `make start` | Start 4 instances (ports 8080–8083) |
 | `make stop` | Stop all instances |

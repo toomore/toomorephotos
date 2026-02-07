@@ -2,10 +2,10 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"os"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/toomore/lazyflickrgo/jsonstruct"
 )
@@ -44,57 +44,42 @@ func (a *App) fromSearch(tags string) []jsonstruct.Photo {
 }
 
 func (a *App) getCachedFromSearch(tag string) []jsonstruct.Photo {
-	a.indexCacheMu.RLock()
-	if ent, ok := a.indexCache[tag]; ok && time.Now().Before(ent.expiresAt) {
-		result := ent.photos
-		a.indexCacheMu.RUnlock()
+	ctx := context.Background()
+	key := "index:" + tag
+	var result []jsonstruct.Photo
+	if ok, _ := a.Cache.Get(ctx, key, &result); ok {
 		return result
 	}
-	a.indexCacheMu.RUnlock()
-
-	a.indexCacheMu.Lock()
-	defer a.indexCacheMu.Unlock()
-	if ent, ok := a.indexCache[tag]; ok && time.Now().Before(ent.expiresAt) {
-		return ent.photos
-	}
-	result := a.fromSearch(tag)
-	a.indexCache[tag] = indexCacheEntry{photos: result, expiresAt: time.Now().Add(a.indexCacheTTL)}
+	result = a.fromSearch(tag)
+	_ = a.Cache.Set(ctx, key, result, a.IndexCacheTTL)
 	return result
 }
 
 func (a *App) getCachedPhotosGetInfo(photoID string) jsonstruct.PhotosGetInfo {
-	a.photoCacheMu.RLock()
-	if ent, ok := a.photoCache[photoID]; ok && time.Now().Before(ent.expiresAt) {
-		info := ent.info
-		a.photoCacheMu.RUnlock()
+	ctx := context.Background()
+	key := "photo:" + photoID
+	var info jsonstruct.PhotosGetInfo
+	if ok, _ := a.Cache.Get(ctx, key, &info); ok {
 		return info
 	}
-	a.photoCacheMu.RUnlock()
-
-	a.photoCacheMu.Lock()
-	defer a.photoCacheMu.Unlock()
-	if ent, ok := a.photoCache[photoID]; ok && time.Now().Before(ent.expiresAt) {
-		return ent.info
-	}
-	info := a.Flickr.PhotosGetInfo(photoID)
-	a.photoCache[photoID] = photoCacheEntry{info: info, expiresAt: time.Now().Add(a.photoCacheTTL)}
+	info = a.Flickr.PhotosGetInfo(photoID)
+	_ = a.Cache.Set(ctx, key, info, a.PhotoCacheTTL)
 	return info
+}
+
+type photoSizesVal struct {
+	Width  int64 `json:"width"`
+	Height int64 `json:"height"`
 }
 
 // getCachedPhotosGetSizes returns width and height for the Large (1024) size.
 // ok is false when the API fails or no Large/Large 1024 size is found.
 func (a *App) getCachedPhotosGetSizes(photoID string) (width, height int64, ok bool) {
-	a.photoSizesCacheMu.RLock()
-	if ent, hit := a.photoSizesCache[photoID]; hit && time.Now().Before(ent.expiresAt) {
-		a.photoSizesCacheMu.RUnlock()
-		return ent.width, ent.height, true
-	}
-	a.photoSizesCacheMu.RUnlock()
-
-	a.photoSizesCacheMu.Lock()
-	defer a.photoSizesCacheMu.Unlock()
-	if ent, hit := a.photoSizesCache[photoID]; hit && time.Now().Before(ent.expiresAt) {
-		return ent.width, ent.height, true
+	ctx := context.Background()
+	key := "photosizes:" + photoID
+	var v photoSizesVal
+	if found, _ := a.Cache.Get(ctx, key, &v); found && v.Width > 0 && v.Height > 0 {
+		return v.Width, v.Height, true
 	}
 	sizes := a.Flickr.PhotosGetSizes(photoID)
 	preferredLabels := []string{"Large", "Large 1024", "Large 1600", "Medium 800", "Medium 640"}
@@ -104,11 +89,7 @@ func (a *App) getCachedPhotosGetSizes(photoID string) (width, height int64, ok b
 				w, errW := strconv.ParseInt(string(s.Width), 10, 64)
 				h, errH := strconv.ParseInt(string(s.Height), 10, 64)
 				if errW == nil && errH == nil && w > 0 && h > 0 {
-					a.photoSizesCache[photoID] = photoSizesCacheEntry{
-						width:     w,
-						height:    h,
-						expiresAt: time.Now().Add(a.photoSizesCacheTTL),
-					}
+					_ = a.Cache.Set(ctx, key, photoSizesVal{Width: w, Height: h}, a.PhotoSizesCacheTTL)
 					return w, h, true
 				}
 				break
@@ -120,11 +101,7 @@ func (a *App) getCachedPhotosGetSizes(photoID string) (width, height int64, ok b
 		w, errW := strconv.ParseInt(string(s.Width), 10, 64)
 		h, errH := strconv.ParseInt(string(s.Height), 10, 64)
 		if errW == nil && errH == nil && w > 0 && h > 0 {
-			a.photoSizesCache[photoID] = photoSizesCacheEntry{
-				width:     w,
-				height:    h,
-				expiresAt: time.Now().Add(a.photoSizesCacheTTL),
-			}
+			_ = a.Cache.Set(ctx, key, photoSizesVal{Width: w, Height: h}, a.PhotoSizesCacheTTL)
 			return w, h, true
 		}
 	}
@@ -157,23 +134,14 @@ func (a *App) getRelatedPhotos(photoID string, tagRaws []string) []jsonstruct.Ph
 }
 
 func (a *App) getCachedRelatedPhotos(photoID string, tagRaws []string) []jsonstruct.Photo {
-	a.relatedPhotosCacheMu.RLock()
-	if ent, hit := a.relatedPhotosCache[photoID]; hit && time.Now().Before(ent.expiresAt) {
-		a.relatedPhotosCacheMu.RUnlock()
-		return ent.photos
+	ctx := context.Background()
+	key := "related:" + photoID
+	var result []jsonstruct.Photo
+	if ok, _ := a.Cache.Get(ctx, key, &result); ok {
+		return result
 	}
-	a.relatedPhotosCacheMu.RUnlock()
-
-	a.relatedPhotosCacheMu.Lock()
-	defer a.relatedPhotosCacheMu.Unlock()
-	if ent, hit := a.relatedPhotosCache[photoID]; hit && time.Now().Before(ent.expiresAt) {
-		return ent.photos
-	}
-	result := a.getRelatedPhotos(photoID, tagRaws)
-	a.relatedPhotosCache[photoID] = relatedPhotosCacheEntry{
-		photos:    result,
-		expiresAt: time.Now().Add(a.relatedPhotosCacheTTL),
-	}
+	result = a.getRelatedPhotos(photoID, tagRaws)
+	_ = a.Cache.Set(ctx, key, result, a.RelatedPhotosCacheTTL)
 	return result
 }
 
@@ -189,22 +157,13 @@ func (a *App) allPhotos(result *[]jsonstruct.Photo) {
 }
 
 func (a *App) getCachedAllPhotos() []jsonstruct.Photo {
-	a.sitemapCacheMu.RLock()
-	if a.sitemapCache != nil && time.Since(a.sitemapCacheAt) < a.sitemapCacheTTL {
-		result := a.sitemapCache
-		a.sitemapCacheMu.RUnlock()
+	ctx := context.Background()
+	key := "sitemap"
+	var result []jsonstruct.Photo
+	if ok, _ := a.Cache.Get(ctx, key, &result); ok {
 		return result
 	}
-	a.sitemapCacheMu.RUnlock()
-
-	a.sitemapCacheMu.Lock()
-	defer a.sitemapCacheMu.Unlock()
-	if a.sitemapCache != nil && time.Since(a.sitemapCacheAt) < a.sitemapCacheTTL {
-		return a.sitemapCache
-	}
-	var result []jsonstruct.Photo
 	a.allPhotos(&result)
-	a.sitemapCache = result
-	a.sitemapCacheAt = time.Now()
-	return a.sitemapCache
+	_ = a.Cache.Set(ctx, key, result, a.SitemapCacheTTL)
+	return result
 }

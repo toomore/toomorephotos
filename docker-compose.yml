@@ -1,0 +1,23 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - FLICKRAPIKEY=${FLICKRAPIKEY}
+      - FLICKRSECRET=${FLICKRSECRET}
+      - FLICKRUSERTOKEN=${FLICKRUSERTOKEN}
+      - FLICKRUSER=${FLICKRUSER}
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+    # Optional: mount tags.txt for custom tags (echo "yourtag" > tags.txt)
+    # volumes: ["./tags.txt:/app/tags.txt:ro"]
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+
+volumes:
+  redis_data:

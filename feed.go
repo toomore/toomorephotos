@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -67,23 +68,16 @@ func (a *App) createFeeds(data []jsonstruct.Photo) *feeds.Feed {
 }
 
 func (a *App) getCachedFeed() *feeds.Feed {
-	a.feedCacheMu.RLock()
-	if a.feedCache != nil && time.Since(a.feedCacheAt) < a.feedCacheTTL {
-		feed := a.feedCache
-		a.feedCacheMu.RUnlock()
-		return feed
-	}
-	a.feedCacheMu.RUnlock()
-
-	a.feedCacheMu.Lock()
-	defer a.feedCacheMu.Unlock()
-	if a.feedCache != nil && time.Since(a.feedCacheAt) < a.feedCacheTTL {
-		return a.feedCache
+	ctx := context.Background()
+	key := "feed"
+	var feed feeds.Feed
+	if ok, _ := a.Cache.Get(ctx, key, &feed); ok {
+		return &feed
 	}
 	result := a.getCachedAllPhotos()
-	a.feedCache = a.createFeeds(result)
-	a.feedCacheAt = time.Now()
-	return a.feedCache
+	f := a.createFeeds(result)
+	_ = a.Cache.Set(ctx, key, f, a.FeedCacheTTL)
+	return f
 }
 
 func (a *App) rss(w http.ResponseWriter, r *http.Request) {

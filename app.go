@@ -8,12 +8,11 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
-	"github.com/gorilla/feeds"
 	"github.com/toomore/lazyflickrgo/flickr"
 	"github.com/toomore/lazyflickrgo/jsonstruct"
+	"github.com/toomore/toomorephotos/cache"
 )
 
 type App struct {
@@ -27,52 +26,14 @@ type App struct {
 	HashCache     map[string]string
 	PhotoPageExpr *regexp.Regexp
 
-	feedCache   *feeds.Feed
-	feedCacheAt time.Time
-	feedCacheMu sync.RWMutex
-	feedCacheTTL time.Duration
+	Cache cache.Cache
 
-	sitemapCache   []jsonstruct.Photo
-	sitemapCacheAt time.Time
-	sitemapCacheMu sync.RWMutex
-	sitemapCacheTTL time.Duration
-
-	indexCache   map[string]indexCacheEntry
-	indexCacheMu sync.RWMutex
-	indexCacheTTL time.Duration
-
-	photoCache   map[string]photoCacheEntry
-	photoCacheMu sync.RWMutex
-	photoCacheTTL time.Duration
-
-	photoSizesCache   map[string]photoSizesCacheEntry
-	photoSizesCacheMu sync.RWMutex
-	photoSizesCacheTTL time.Duration
-
-	relatedPhotosCache   map[string]relatedPhotosCacheEntry
-	relatedPhotosCacheMu sync.RWMutex
-	relatedPhotosCacheTTL time.Duration
-}
-
-type indexCacheEntry struct {
-	photos   []jsonstruct.Photo
-	expiresAt time.Time
-}
-
-type photoCacheEntry struct {
-	info     jsonstruct.PhotosGetInfo
-	expiresAt time.Time
-}
-
-type photoSizesCacheEntry struct {
-	width     int64
-	height    int64
-	expiresAt time.Time
-}
-
-type relatedPhotosCacheEntry struct {
-	photos    []jsonstruct.Photo
-	expiresAt time.Time
+	IndexCacheTTL        time.Duration
+	PhotoCacheTTL        time.Duration
+	PhotoSizesCacheTTL   time.Duration
+	RelatedPhotosCacheTTL time.Duration
+	SitemapCacheTTL      time.Duration
+	FeedCacheTTL         time.Duration
 }
 
 func newTemplateFuncs(licenses map[string]jsonstruct.License) template.FuncMap {
@@ -175,25 +136,22 @@ func NewApp() (*App, error) {
 	}
 
 	return &App{
-		Flickr:          f,
-		Licenses:        licenses,
-		Tags:            tags,
-		UserID:          userID,
-		TplIndex:        tplIndex,
-		TplPhoto:        tplPhoto,
-		TplSitemap:      tplSitemap,
-		HashCache:       make(map[string]string),
-		PhotoPageExpr:   regexp.MustCompile(`/p/([0-9]+)-?(.+)?`),
-		feedCacheTTL:    10 * time.Minute,
-		sitemapCacheTTL: 10 * time.Minute,
-		indexCache:      make(map[string]indexCacheEntry),
-		indexCacheTTL:   2 * time.Minute,
-		photoCache:        make(map[string]photoCacheEntry),
-		photoCacheTTL:     5 * time.Minute,
-		photoSizesCache:     make(map[string]photoSizesCacheEntry),
-		photoSizesCacheTTL:  5 * time.Minute,
-		relatedPhotosCache:  make(map[string]relatedPhotosCacheEntry),
-		relatedPhotosCacheTTL: 5 * time.Minute,
+		Flickr:               f,
+		Licenses:             licenses,
+		Tags:                 tags,
+		UserID:               userID,
+		TplIndex:             tplIndex,
+		TplPhoto:             tplPhoto,
+		TplSitemap:           tplSitemap,
+		HashCache:            make(map[string]string),
+		PhotoPageExpr:        regexp.MustCompile(`/p/([0-9]+)-?(.+)?`),
+		Cache:                cache.New(),
+		IndexCacheTTL:        2 * time.Minute,
+		PhotoCacheTTL:        5 * time.Minute,
+		PhotoSizesCacheTTL:   5 * time.Minute,
+		RelatedPhotosCacheTTL: 5 * time.Minute,
+		SitemapCacheTTL:      10 * time.Minute,
+		FeedCacheTTL:        10 * time.Minute,
 	}, nil
 }
 
