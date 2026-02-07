@@ -130,7 +130,8 @@ func (a *App) photo(w http.ResponseWriter, r *http.Request) {
 			Height                int64
 			PaddingBottomPercent  float64
 			RelatedPhotos         []jsonstruct.Photo
-		}{photoinfo.Photo, width, height, paddingBottomPercent, relatedPhotos}
+			MapboxToken           string
+		}{photoinfo.Photo, width, height, paddingBottomPercent, relatedPhotos, a.MapboxToken}
 		if err := a.TplPhoto.Execute(w, data); err != nil {
 			log.Printf("template execute error: %v", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)

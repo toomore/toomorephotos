@@ -31,6 +31,8 @@ type App struct {
 	Cache cache.Cache
 	DB    *db.DB
 
+	MapboxToken string
+
 	IndexCacheTTL        time.Duration
 	PhotoCacheTTL        time.Duration
 	PhotoSizesCacheTTL   time.Duration
@@ -165,6 +167,7 @@ func NewApp() (*App, error) {
 		PhotoPageExpr:        regexp.MustCompile(`/p/([0-9]+)-?(.+)?`),
 		Cache:                cache.New(),
 		DB:                   database,
+		MapboxToken:          os.Getenv("MAPBOX_ACCESS_TOKEN"),
 		IndexCacheTTL:        10 * time.Minute,
 		PhotoCacheTTL:        30 * 24 * time.Hour,     // 30 天
 		PhotoSizesCacheTTL:   365 * 24 * time.Hour,    // 365 天

@@ -9,7 +9,7 @@ A Flickr photo gallery built with Go, supporting RSS/Atom feeds and sitemap.
 
 - **Flickr API 整合**：透過 Flickr API 取得照片資料 / Flickr API integration for photo data
 - **首頁輪替**：依 `tags.txt` 依時間輪替顯示不同標籤的照片 / Homepage rotates photos by tags based on time
-- **照片詳細頁**：完整顯示標題、描述、標籤、授權、地圖 / Photo detail page with title, description, tags, license, map
+- **照片詳細頁**：完整顯示標題、描述、標籤、授權、地圖（Mapbox） / Photo detail page with title, description, tags, license, map (Mapbox)
 - **RSS/Atom feeds**：支援訂閱，含 30 分鐘 TTL 快取 / Feed support with 30-minute TTL cache
 - **XML Sitemap**：供搜尋引擎索引 / XML sitemap for search engines
 - **ETag 快取**：靜態檔與頁面快取 / ETag caching for static files and pages
@@ -60,6 +60,7 @@ export FLICKRUSER=...
 | FLICKRUSER | Flickr User ID |
 | REDIS_URL | (Optional) Redis URL for persistent cache, e.g. `redis://localhost:6379`. If not set, uses in-memory cache. |
 | DATABASE_URL | (Optional) PostgreSQL URL for local photo metadata. If set, app uses DB first and fallback to Flickr API. If not set, uses Flickr + cache only. |
+| MAPBOX_ACCESS_TOKEN | (Optional) Mapbox access token for photo location map. If set, photos with location show a static map; if not set, map block is hidden. |
 
 ---
 

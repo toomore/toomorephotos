@@ -19,7 +19,9 @@
              data-ad-slot="3449177341"
              data-ad-format="link"
              data-full-width-responsive="true"></ins></p>
-        <p class="align-center"><a href="//maps.google.com/?q={{.Photo.Location.Latitude}},{{.Photo.Location.Longitude}}"><img width="300" height="200" style="border-radius:3px;" src="//maps.googleapis.com/maps/api/staticmap?size=300x200&center={{.Photo.Location.Latitude}},{{.Photo.Location.Longitude}}&key=AIzaSyBWnlG1YSHLvCL3075oxLvXXidrzH57tTY&zoom=16&scale=2&maptype=hybrid"></a></p>
+        {{if and .Photo.Location.Latitude .Photo.Location.Longitude .MapboxToken}}
+        <p class="align-center"><a href="https://www.openstreetmap.org/?mlat={{.Photo.Location.Latitude}}&amp;mlon={{.Photo.Location.Longitude}}&amp;zoom=16"><img width="300" height="200" style="border-radius:3px;" src="https://api.mapbox.com/styles/v1/mapbox/satellite-v9/static/{{.Photo.Location.Longitude}},{{.Photo.Location.Latitude}},16/300x200@2x?access_token={{.MapboxToken}}" alt="Map location"></a></p>
+        {{end}}
         {{if .RelatedPhotos}}
         <p class="align-center"><small>更多同類型作品</small></p>
         <div class="related-photos" style="text-align:center;">

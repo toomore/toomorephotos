@@ -10,6 +10,7 @@ services:
       - FLICKRUSER=${FLICKRUSER}
       - REDIS_URL=redis://redis:6379
       - DATABASE_URL=${DATABASE_URL:-postgres://toomorephotos:toomorephotos@postgres:5432/toomorephotos?sslmode=disable}
+      - MAPBOX_ACCESS_TOKEN=${MAPBOX_ACCESS_TOKEN}
     depends_on:
       redis:
         condition: service_started
