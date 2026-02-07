@@ -387,10 +387,20 @@
   /* -------------------------------------
       RELATED PHOTOS
   ------------------------------------- */
+  .related-photos {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    justify-items: center;
+  }
+  .related-photos a {
+    width: 100%;
+    max-width: 120px;
+  }
   .related-photos a img {
     border-radius: 3px;
-    width: 120px;
-    height: 120px;
+    width: 100%;
+    aspect-ratio: 1;
     object-fit: cover;
   }
   .related-photos a:hover img {
