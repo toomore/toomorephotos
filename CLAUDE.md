@@ -130,7 +130,7 @@ make restart
 ### 快取機制
 
 - **Redis（選用）**: 設定 `REDIS_URL` 時使用 Redis 快取，重啟後仍保留；未設定則使用記憶體快取
-- **快取項目**: 首頁 index、照片 info、尺寸、相關作品、sitemap、feed（TTL 2–10 分鐘）
+- **快取項目與 TTL**: 照片 info 30 天、照片尺寸 365 天、相關作品 1h、首頁 10min、sitemap/feed 30min
 - **首頁**: 使用 ETag 基於 tag 內容產生
 - **照片頁**: ETag 基於照片標題和描述的 MD5
 - **靜態檔案**: ETag 基於檔案內容的 MD5

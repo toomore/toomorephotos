@@ -146,12 +146,12 @@ func NewApp() (*App, error) {
 		HashCache:            make(map[string]string),
 		PhotoPageExpr:        regexp.MustCompile(`/p/([0-9]+)-?(.+)?`),
 		Cache:                cache.New(),
-		IndexCacheTTL:        2 * time.Minute,
-		PhotoCacheTTL:        5 * time.Minute,
-		PhotoSizesCacheTTL:   5 * time.Minute,
-		RelatedPhotosCacheTTL: 5 * time.Minute,
-		SitemapCacheTTL:      10 * time.Minute,
-		FeedCacheTTL:        10 * time.Minute,
+		IndexCacheTTL:        10 * time.Minute,
+		PhotoCacheTTL:        30 * 24 * time.Hour,     // 30 天
+		PhotoSizesCacheTTL:   365 * 24 * time.Hour,    // 365 天
+		RelatedPhotosCacheTTL: 1 * time.Hour,
+		SitemapCacheTTL:      30 * time.Minute,
+		FeedCacheTTL:         30 * time.Minute,
 	}, nil
 }
 

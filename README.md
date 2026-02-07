@@ -10,7 +10,7 @@ A Flickr photo gallery built with Go, supporting RSS/Atom feeds and sitemap.
 - **Flickr API 整合**：透過 Flickr API 取得照片資料 / Flickr API integration for photo data
 - **首頁輪替**：依 `tags.txt` 依時間輪替顯示不同標籤的照片 / Homepage rotates photos by tags based on time
 - **照片詳細頁**：完整顯示標題、描述、標籤、授權、地圖 / Photo detail page with title, description, tags, license, map
-- **RSS/Atom feeds**：支援訂閱，含 10 分鐘 TTL 快取 / Feed support with 10-minute TTL cache
+- **RSS/Atom feeds**：支援訂閱，含 30 分鐘 TTL 快取 / Feed support with 30-minute TTL cache
 - **XML Sitemap**：供搜尋引擎索引 / XML sitemap for search engines
 - **ETag 快取**：靜態檔與頁面快取 / ETag caching for static files and pages
 - **響應式設計**：lazy loading 圖片 / Responsive design with lazy loading
@@ -58,6 +58,20 @@ export FLICKRUSER=...
 | FLICKRUSERTOKEN | Flickr User Token |
 | FLICKRUSER | Flickr User ID |
 | REDIS_URL | (Optional) Redis URL for persistent cache, e.g. `redis://localhost:6379`. If not set, uses in-memory cache. |
+
+---
+
+## 快取 TTL / Cache TTL
+
+Redis/記憶體快取的有效時間（未設定 REDIS_URL 時使用記憶體）：
+
+| 項目 | TTL | 說明 |
+|------|-----|------|
+| 照片詳情 (PhotosGetInfo) | 30 天 | 標題、描述等 metadata |
+| 照片尺寸 | 365 天 | 尺寸不變，長期快取 |
+| 相關作品 | 1 小時 | 同主題 + 其他主題混入 |
+| 首頁 tag 搜尋 | 10 分鐘 | 依 tag 輪替 |
+| Sitemap / RSS / Atom | 30 分鐘 | 全站列表與 feeds |
 
 ---
 
