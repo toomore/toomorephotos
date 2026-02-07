@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/toomore/lazyflickrgo/jsonstruct"
@@ -77,6 +78,40 @@ func (a *App) getCachedPhotosGetInfo(photoID string) jsonstruct.PhotosGetInfo {
 	info := a.Flickr.PhotosGetInfo(photoID)
 	a.photoCache[photoID] = photoCacheEntry{info: info, expiresAt: time.Now().Add(a.photoCacheTTL)}
 	return info
+}
+
+// getCachedPhotosGetSizes returns width and height for the Large (1024) size.
+// ok is false when the API fails or no Large/Large 1024 size is found.
+func (a *App) getCachedPhotosGetSizes(photoID string) (width, height int64, ok bool) {
+	a.photoSizesCacheMu.RLock()
+	if ent, hit := a.photoSizesCache[photoID]; hit && time.Now().Before(ent.expiresAt) {
+		a.photoSizesCacheMu.RUnlock()
+		return ent.width, ent.height, true
+	}
+	a.photoSizesCacheMu.RUnlock()
+
+	a.photoSizesCacheMu.Lock()
+	defer a.photoSizesCacheMu.Unlock()
+	if ent, hit := a.photoSizesCache[photoID]; hit && time.Now().Before(ent.expiresAt) {
+		return ent.width, ent.height, true
+	}
+	sizes := a.Flickr.PhotosGetSizes(photoID)
+	for _, s := range sizes.Sizes.Size {
+		if s.Label == "Large" || s.Label == "Large 1024" {
+			w, errW := strconv.ParseInt(string(s.Width), 10, 64)
+			h, errH := strconv.ParseInt(string(s.Height), 10, 64)
+			if errW == nil && errH == nil && w > 0 && h > 0 {
+				a.photoSizesCache[photoID] = photoSizesCacheEntry{
+					width:     w,
+					height:    h,
+					expiresAt: time.Now().Add(a.photoSizesCacheTTL),
+				}
+				return w, h, true
+			}
+			break
+		}
+	}
+	return 0, 0, false
 }
 
 func (a *App) allPhotos(result *[]jsonstruct.Photo) {

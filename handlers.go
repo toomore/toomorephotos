@@ -111,7 +111,16 @@ func (a *App) photo(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotModified)
 	} else {
 		w.Header().Set("ETag", etagStr)
-		if err := a.TplPhoto.Execute(w, photoinfo.Photo); err != nil {
+		width, height := int64(0), int64(0)
+		if w, h, ok := a.getCachedPhotosGetSizes(photono); ok {
+			width, height = w, h
+		}
+		data := struct {
+			Photo  interface{}
+			Width  int64
+			Height int64
+		}{photoinfo.Photo, width, height}
+		if err := a.TplPhoto.Execute(w, data); err != nil {
 			log.Printf("template execute error: %v", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		}
