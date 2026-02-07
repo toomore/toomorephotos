@@ -59,7 +59,7 @@ func (a *App) index(w http.ResponseWriter, r *http.Request) {
 	} else {
 		w.Header().Set("ETag", etagStr)
 		w.Header().Set("Cache-Control", "max-age=120")
-		result := a.fromSearch(a.Tags[modValue])
+		result := a.getCachedFromSearch(a.Tags[modValue])
 		min := 30
 		if len(result) < 30 {
 			min = len(result)
@@ -87,8 +87,7 @@ func (a *App) photo(w http.ResponseWriter, r *http.Request) {
 		a.notFound(w, r)
 		return
 	}
-	var photoinfo jsonstruct.PhotosGetInfo
-	photoinfo = a.Flickr.PhotosGetInfo(photono)
+	photoinfo := a.getCachedPhotosGetInfo(photono)
 
 	var etaghex hash.Hash
 	var etagStr string
@@ -120,8 +119,7 @@ func (a *App) photo(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) sitemap(w http.ResponseWriter, r *http.Request) {
-	var result []jsonstruct.Photo
-	a.allPhotos(&result)
+	result := a.getCachedAllPhotos()
 	tags := make([]int, len(a.Tags))
 	for i := range a.Tags {
 		tags[i] = i

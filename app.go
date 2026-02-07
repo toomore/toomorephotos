@@ -31,6 +31,29 @@ type App struct {
 	feedCacheAt time.Time
 	feedCacheMu sync.RWMutex
 	feedCacheTTL time.Duration
+
+	sitemapCache   []jsonstruct.Photo
+	sitemapCacheAt time.Time
+	sitemapCacheMu sync.RWMutex
+	sitemapCacheTTL time.Duration
+
+	indexCache   map[string]indexCacheEntry
+	indexCacheMu sync.RWMutex
+	indexCacheTTL time.Duration
+
+	photoCache   map[string]photoCacheEntry
+	photoCacheMu sync.RWMutex
+	photoCacheTTL time.Duration
+}
+
+type indexCacheEntry struct {
+	photos   []jsonstruct.Photo
+	expiresAt time.Time
+}
+
+type photoCacheEntry struct {
+	info     jsonstruct.PhotosGetInfo
+	expiresAt time.Time
 }
 
 func newTemplateFuncs(licenses map[string]jsonstruct.License) template.FuncMap {
@@ -133,16 +156,21 @@ func NewApp() (*App, error) {
 	}
 
 	return &App{
-		Flickr:        f,
-		Licenses:      licenses,
-		Tags:          tags,
-		UserID:        userID,
-		TplIndex:      tplIndex,
-		TplPhoto:      tplPhoto,
-		TplSitemap:    tplSitemap,
-		HashCache:     make(map[string]string),
-		PhotoPageExpr: regexp.MustCompile(`/p/([0-9]+)-?(.+)?`),
-		feedCacheTTL:  10 * time.Minute,
+		Flickr:          f,
+		Licenses:        licenses,
+		Tags:            tags,
+		UserID:          userID,
+		TplIndex:        tplIndex,
+		TplPhoto:        tplPhoto,
+		TplSitemap:      tplSitemap,
+		HashCache:       make(map[string]string),
+		PhotoPageExpr:   regexp.MustCompile(`/p/([0-9]+)-?(.+)?`),
+		feedCacheTTL:    10 * time.Minute,
+		sitemapCacheTTL: 10 * time.Minute,
+		indexCache:      make(map[string]indexCacheEntry),
+		indexCacheTTL:   2 * time.Minute,
+		photoCache:      make(map[string]photoCacheEntry),
+		photoCacheTTL:   5 * time.Minute,
 	}, nil
 }
 

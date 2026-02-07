@@ -6,11 +6,14 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gorilla/feeds"
 	"github.com/toomore/lazyflickrgo/jsonstruct"
 )
+
+const feedConcurrency = 10
 
 func (a *App) createFeeds(data []jsonstruct.Photo) *feeds.Feed {
 	feed := &feeds.Feed{
@@ -20,13 +23,30 @@ func (a *App) createFeeds(data []jsonstruct.Photo) *feeds.Feed {
 		Author:      &feeds.Author{Name: "Toomore Chiang", Email: "toomore0929@gmail.com"},
 	}
 
-	var photoinfo jsonstruct.PhotosGetInfo
-	var times int
-	var updated time.Time
-	for i, v := range data[:min(100, len(data))] {
-		photoinfo = a.Flickr.PhotosGetInfo(v.ID)
-		times, _ = strconv.Atoi(photoinfo.Photo.Dates.Posted)
-		updated = time.Unix(int64(times), 0)
+	n := min(100, len(data))
+	if n == 0 {
+		return feed
+	}
+
+	results := make([]jsonstruct.PhotosGetInfo, n)
+	sem := make(chan struct{}, feedConcurrency)
+	var wg sync.WaitGroup
+
+	for i, v := range data[:n] {
+		wg.Add(1)
+		go func(i int, id string) {
+			defer wg.Done()
+			sem <- struct{}{}
+			defer func() { <-sem }()
+			results[i] = a.getCachedPhotosGetInfo(id)
+		}(i, v.ID)
+	}
+	wg.Wait()
+
+	for i, v := range data[:n] {
+		photoinfo := results[i]
+		times, _ := strconv.Atoi(photoinfo.Photo.Dates.Posted)
+		updated := time.Unix(int64(times), 0)
 
 		if i == 0 {
 			feed.Updated = updated
@@ -60,8 +80,7 @@ func (a *App) getCachedFeed() *feeds.Feed {
 	if a.feedCache != nil && time.Since(a.feedCacheAt) < a.feedCacheTTL {
 		return a.feedCache
 	}
-	var result []jsonstruct.Photo
-	a.allPhotos(&result)
+	result := a.getCachedAllPhotos()
 	a.feedCache = a.createFeeds(result)
 	a.feedCacheAt = time.Now()
 	return a.feedCache
