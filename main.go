@@ -27,11 +27,10 @@ var (
 	f             *flickr.Flickr
 	httpPort      = flag.String("p", ":8080", "HTTP port")
 	licenses      map[string]jsonstruct.License
-	photoPageExpr = regexp.MustCompile(`/p/(amp/)?([0-9]+)-?(.+)?`)
+	photoPageExpr = regexp.MustCompile(`/p/([0-9]+)-?(.+)?`)
 	rTags         []string
 	tplIndex      *template.Template
 	tplPhoto      *template.Template
-	tplPhotoAMP   *template.Template
 	tplSitemap    *template.Template
 	userID        string
 	hashCache     map[string]string
@@ -103,7 +102,6 @@ func init() {
 	}
 	tplIndex = template.Must(template.Must(template.ParseFiles("./base.htm")).Funcs(funcs).ParseFiles("./index.htm"))
 	tplPhoto = template.Must(template.Must(template.ParseFiles("./base_2019.html")).Funcs(funcs).ParseFiles("./photo.htm"))
-	tplPhotoAMP = template.Must(template.Must(template.ParseFiles("./base_amp.htm")).Funcs(funcs).ParseFiles("./photo_amp.htm"))
 	tplSitemap = template.Must(template.ParseFiles("./sitemap.htm"))
 
 	requiredEnv := []string{"FLICKRAPIKEY", "FLICKRSECRET", "FLICKRUSERTOKEN", "FLICKRUSER"}
@@ -204,18 +202,12 @@ func index(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-type ampphoto struct {
-	P      jsonstruct.PhotosGetInfo
-	Width  int64
-	Height int64
-}
-
 func photo(w http.ResponseWriter, r *http.Request) {
 	logs(r, "")
 	match := photoPageExpr.FindStringSubmatch(r.RequestURI)
 	var photono string
-	if len(match) >= 3 {
-		photono = match[2]
+	if len(match) >= 2 {
+		photono = match[1]
 	}
 
 	if photono == "" {
@@ -247,27 +239,9 @@ func photo(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotModified)
 	} else {
 		w.Header().Set("ETag", etagStr)
-		if match[1] == "" {
-			if err := tplPhoto.Execute(w, photoinfo.Photo); err != nil {
-				log.Printf("template execute error: %v", err)
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			}
-		} else {
-			var width int64
-			var height int64
-			sizes := f.PhotosGetSizes(photono)
-			for _, v := range sizes.Sizes.Size {
-				if v.Label == "Medium 640" {
-					log.Println(v.Width, v.Height)
-					width, _ = v.Width.Int64()
-					height, _ = v.Height.Int64()
-					break
-				}
-			}
-			if err := tplPhotoAMP.Execute(w, ampphoto{P: photoinfo, Width: width, Height: height}); err != nil {
-				log.Printf("template execute error: %v", err)
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			}
+		if err := tplPhoto.Execute(w, photoinfo.Photo); err != nil {
+			log.Printf("template execute error: %v", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		}
 	}
 }
@@ -406,7 +380,6 @@ func main() {
 	serveSingle("/favicon.ico", "favicon.ico")
 	serveSingle("/jquery.unveil.min.js", "jquery.unveil.min.js")
 	serveSingle("/base_min.css", "base_min.css")
-	serveSingle("/base_amp_min.css", "base_amp_min.css")
 	serveSingle("/base_photo_min.css", "base_photo_min.css")
 	serveSingle("/robots.txt", "robots.txt")
 	log.Println("HTTP Port:", *httpPort)
