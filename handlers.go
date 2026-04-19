@@ -48,7 +48,7 @@ func (a *App) index(w http.ResponseWriter, r *http.Request) {
 	} else {
 		modValue = int(math.Mod(float64(time.Now().Minute()), float64(len(a.Tags))))
 	}
-	etagStr := fmt.Sprintf("W/\"%d-%s\"", modValue, a.Tags[modValue])
+	etagStr := fmt.Sprintf("W/\"%d-%s-%d\"", modValue, a.Tags[modValue], time.Now().YearDay())
 
 	w.Header().Set("X-Tags", a.Tags[modValue])
 	w.Header().Set("X-Github", "github.com/toomore/toomorephotos")
@@ -64,10 +64,17 @@ func (a *App) index(w http.ResponseWriter, r *http.Request) {
 		if len(result) < 30 {
 			min = len(result)
 		}
+		allPhotos := a.getCachedAllPhotos()
+		var featured *jsonstruct.Photo
+		if len(allPhotos) > 0 {
+			f := allPhotos[time.Now().YearDay()%len(allPhotos)]
+			featured = &f
+		}
 		data := struct {
-			R []jsonstruct.Photo
-			L []jsonstruct.Photo
-		}{result, result[:min]}
+			R        []jsonstruct.Photo
+			L        []jsonstruct.Photo
+			Featured *jsonstruct.Photo
+		}{result, result[:min], featured}
 		if err := a.TplIndex.Execute(w, data); err != nil {
 			log.Printf("template execute error: %v", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
