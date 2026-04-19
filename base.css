@@ -1,12 +1,12 @@
 body {
-    background-color: #000;
+    background-color: #fff;
     font-family: arial;
 }
 .wall a:hover img {
-  border: 1px #ccc solid;
+  border: 1px #999 solid;
 }
 .wall a img {
-  border: 1px #333 solid;
+  border: 1px #ccc solid;
 }
 @media only screen and (max-width: 1280px) {
     .wall img { width: 120px; height: 120px;}
@@ -93,4 +93,27 @@ body {
 .photo div.desc a {
     color: #f1f;
     font-weight: bold;
+}
+.daily-featured {
+    text-align: center;
+    padding: 10px 0 5px;
+}
+.daily-featured a {
+    display: inline-block;
+    text-decoration: none;
+}
+.daily-featured img {
+    max-width: 100%;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+}
+.daily-featured a:hover img {
+    border-color: #999;
+}
+.daily-featured-title {
+    color: #333;
+    font-style: italic;
+    font-size: 8pt;
+    text-align: right;
+    margin: 3px 0 8px;
 }

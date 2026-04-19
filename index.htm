@@ -4,6 +4,15 @@
 {{- end}}
 
 {{define "content"}}
+    {{if .Featured}}
+    <div class="daily-featured">
+      <a href="/p/{{.Featured.ID}}-{{.Featured.Title | replaceHover}}">
+        <img alt="{{.Featured.Title}} Photo by Toomore"
+             src="/f/b/{{.Featured.Farm}}/{{.Featured.Server}}/{{.Featured.Secret}}/{{.Featured.ID}}.jpg">
+        <p class="daily-featured-title">{{.Featured.Title}}</p>
+      </a>
+    </div>
+    {{end}}
     <div class="wall" style="text-align:center;">
         {{range .R}}
         {{if .Ispublic}}<a href="/p/{{.ID}}-{{.Title | replaceHover}}"><img loading="lazy" alt="{{.Title}} Photo by Toomore" src="/f/q/{{.Farm}}/{{.Server}}/{{.Secret}}/{{.ID}}.jpg"></a>{{end}}{{end}}
