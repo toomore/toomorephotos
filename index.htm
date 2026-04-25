@@ -8,14 +8,15 @@
     <div class="daily-featured">
       <div class="featured-container">
         <a class="featured-blur-anchor" href="/p/{{.Featured.ID}}-{{.Featured.Title | replaceHover}}">
-          <span class="featured-blur-wrapper" style="padding-bottom:{{.FeaturedPaddingBottom}}%;">
-            <span class="featured-blur-inner">
-              <img class="featured-blur-placeholder" src="/f/m/{{.Featured.Farm}}/{{.Featured.Server}}/{{.Featured.Secret}}/{{.Featured.ID}}.jpg" alt="">
-              <img class="featured-main-img"
-                   alt="{{.Featured.Title}} Photo by Toomore"
-                   src="/f/b/{{.Featured.Farm}}/{{.Featured.Server}}/{{.Featured.Secret}}/{{.Featured.ID}}.jpg"
-                   {{- if and .FeaturedWidth .FeaturedHeight}} width="{{.FeaturedWidth}}" height="{{.FeaturedHeight}}"{{end}}>
-            </span>
+          <span class="featured-blur-wrapper">
+            <img class="featured-blur-placeholder"
+                 src="/f/m/{{.Featured.Farm}}/{{.Featured.Server}}/{{.Featured.Secret}}/{{.Featured.ID}}.jpg"
+                 alt=""
+                 {{- if and .FeaturedWidth .FeaturedHeight}} width="{{.FeaturedWidth}}" height="{{.FeaturedHeight}}"{{end}}>
+            <img class="featured-main-img"
+                 alt="{{.Featured.Title}} Photo by Toomore"
+                 src="/f/b/{{.Featured.Farm}}/{{.Featured.Server}}/{{.Featured.Secret}}/{{.Featured.ID}}.jpg"
+                 {{- if and .FeaturedWidth .FeaturedHeight}} width="{{.FeaturedWidth}}" height="{{.FeaturedHeight}}"{{end}}>
           </span>
           <p class="daily-featured-title">{{.Featured.Title}}</p>
         </a>

@@ -71,23 +71,18 @@ func (a *App) index(w http.ResponseWriter, r *http.Request) {
 			featured = &f
 		}
 		var featuredWidth, featuredHeight int64
-		featuredPaddingBottom := 75.0
 		if featured != nil {
 			if w, h, ok := a.getCachedPhotosGetSizes(featured.ID); ok {
 				featuredWidth, featuredHeight = w, h
-				if w > 0 && h > 0 {
-					featuredPaddingBottom = float64(h) / float64(w) * 100
-				}
 			}
 		}
 		data := struct {
-			R                    []jsonstruct.Photo
-			L                    []jsonstruct.Photo
-			Featured             *jsonstruct.Photo
-			FeaturedWidth        int64
-			FeaturedHeight       int64
-			FeaturedPaddingBottom float64
-		}{result, result[:min], featured, featuredWidth, featuredHeight, featuredPaddingBottom}
+			R              []jsonstruct.Photo
+			L              []jsonstruct.Photo
+			Featured       *jsonstruct.Photo
+			FeaturedWidth  int64
+			FeaturedHeight int64
+		}{result, result[:min], featured, featuredWidth, featuredHeight}
 		if err := a.TplIndex.Execute(w, data); err != nil {
 			log.Printf("template execute error: %v", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)

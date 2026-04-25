@@ -119,33 +119,27 @@ body {
     text-decoration: none;
 }
 .featured-blur-wrapper {
-    position: relative;
-    display: block;
+    display: grid;
     overflow: hidden;
+    max-width: 100%;
     border: 1px solid #ccc;
     border-radius: 3px;
 }
 .featured-blur-anchor:hover .featured-blur-wrapper {
     border-color: #999;
 }
-.featured-blur-inner {
-    position: absolute;
-    inset: 0;
+.featured-blur-wrapper img {
+    grid-area: 1 / 1;
+    width: 100%;
+    height: auto;
+    display: block;
 }
 .featured-blur-placeholder {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
     object-fit: cover;
     filter: blur(10px);
     transform: scale(1.05);
 }
 .featured-main-img {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
     object-fit: contain;
     opacity: 0;
     transition: opacity 0.4s ease-in;
