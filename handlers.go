@@ -70,11 +70,19 @@ func (a *App) index(w http.ResponseWriter, r *http.Request) {
 			f := allPhotos[time.Now().YearDay()%len(allPhotos)]
 			featured = &f
 		}
+		var featuredWidth, featuredHeight int64
+		if featured != nil {
+			if w, h, ok := a.getCachedPhotosGetSizes(featured.ID); ok {
+				featuredWidth, featuredHeight = w, h
+			}
+		}
 		data := struct {
-			R        []jsonstruct.Photo
-			L        []jsonstruct.Photo
-			Featured *jsonstruct.Photo
-		}{result, result[:min], featured}
+			R             []jsonstruct.Photo
+			L             []jsonstruct.Photo
+			Featured      *jsonstruct.Photo
+			FeaturedWidth  int64
+			FeaturedHeight int64
+		}{result, result[:min], featured, featuredWidth, featuredHeight}
 		if err := a.TplIndex.Execute(w, data); err != nil {
 			log.Printf("template execute error: %v", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)

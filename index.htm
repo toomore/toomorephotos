@@ -8,7 +8,8 @@
     <div class="daily-featured">
       <a href="/p/{{.Featured.ID}}-{{.Featured.Title | replaceHover}}">
         <img alt="{{.Featured.Title}} Photo by Toomore"
-             src="/f/b/{{.Featured.Farm}}/{{.Featured.Server}}/{{.Featured.Secret}}/{{.Featured.ID}}.jpg">
+             src="/f/b/{{.Featured.Farm}}/{{.Featured.Server}}/{{.Featured.Secret}}/{{.Featured.ID}}.jpg"
+             {{- if and .FeaturedWidth .FeaturedHeight}} width="{{.FeaturedWidth}}" height="{{.FeaturedHeight}}"{{end}}>
         <p class="daily-featured-title">{{.Featured.Title}}</p>
       </a>
     </div>
