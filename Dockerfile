@@ -4,9 +4,9 @@ WORKDIR /app
 
 COPY go.mod go.sum ./
 RUN go mod download
+RUN go install github.com/tdewolff/minify/v2/cmd/minify@v2.24.13
 
 COPY . .
-RUN go install github.com/tdewolff/minify/v2/cmd/minify@v2.24.13
 RUN minify -o ./base_photo_min.css ./base_photo.css
 RUN minify -o ./base_min.css ./base.css
 RUN apk add --no-cache curl && \
