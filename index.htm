@@ -46,8 +46,9 @@
   var img = document.querySelector('.featured-main-img');
   if (!img) return;
   function show() { img.classList.add('loaded'); }
+  img.addEventListener('load', show);
+  img.addEventListener('error', show);
   if (img.complete) show();
-  else img.addEventListener('load', show);
 })();
     </script>
 {{end}}
