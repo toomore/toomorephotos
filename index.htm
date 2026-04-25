@@ -6,12 +6,20 @@
 {{define "content"}}
     {{if .Featured}}
     <div class="daily-featured">
-      <a href="/p/{{.Featured.ID}}-{{.Featured.Title | replaceHover}}">
-        <img alt="{{.Featured.Title}} Photo by Toomore"
-             src="/f/b/{{.Featured.Farm}}/{{.Featured.Server}}/{{.Featured.Secret}}/{{.Featured.ID}}.jpg"
-             {{- if and .FeaturedWidth .FeaturedHeight}} width="{{.FeaturedWidth}}" height="{{.FeaturedHeight}}"{{end}}>
-        <p class="daily-featured-title">{{.Featured.Title}}</p>
-      </a>
+      <div class="featured-container">
+        <a class="featured-blur-anchor" href="/p/{{.Featured.ID}}-{{.Featured.Title | replaceHover}}">
+          <span class="featured-blur-wrapper" style="padding-bottom:{{.FeaturedPaddingBottom}}%;">
+            <span class="featured-blur-inner">
+              <img class="featured-blur-placeholder" src="/f/m/{{.Featured.Farm}}/{{.Featured.Server}}/{{.Featured.Secret}}/{{.Featured.ID}}.jpg" alt="">
+              <img class="featured-main-img"
+                   alt="{{.Featured.Title}} Photo by Toomore"
+                   src="/f/b/{{.Featured.Farm}}/{{.Featured.Server}}/{{.Featured.Secret}}/{{.Featured.ID}}.jpg"
+                   {{- if and .FeaturedWidth .FeaturedHeight}} width="{{.FeaturedWidth}}" height="{{.FeaturedHeight}}"{{end}}>
+            </span>
+          </span>
+          <p class="daily-featured-title">{{.Featured.Title}}</p>
+        </a>
+      </div>
     </div>
     {{end}}
     <div class="wall" style="text-align:center;">
@@ -32,6 +40,15 @@
 
 {{define "js"}}
     <script async src='https://cse.google.com/cse.js?cx=partner-pub-8083183430499740:8193882340'></script>
+    <script>
+(function(){
+  var img = document.querySelector('.featured-main-img');
+  if (!img) return;
+  function show() { img.classList.add('loaded'); }
+  if (img.complete) show();
+  else img.addEventListener('load', show);
+})();
+    </script>
 {{end}}
 
 {{define "og" -}}
