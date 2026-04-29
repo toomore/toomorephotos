@@ -1,0 +1,33 @@
+# VCS
+.git
+.gitignore
+
+# Editor / IDE
+.cursor
+.vscode
+.idea
+*.swp
+
+# Project docs / scripts not needed for build
+README.md
+CLAUDE.md
+Makefile
+pshb.sh
+
+# Build artifacts (will be rebuilt inside the container)
+toomorephotos
+toomorephotos-*
+*_min.css
+*.min.js
+jquery.unveil.js
+
+# Runtime / local-only files
+*.log
+tags.txt
+ticket.key
+
+# Docker files themselves
+Dockerfile
+.dockerignore
+docker-compose.yml
+docker-compose.*.yml
