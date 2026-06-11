@@ -12,6 +12,13 @@ var (
 	doSync     = flag.Bool("sync", false, "執行 sync：從 Flickr 取得照片 metadata 寫入 DB 後退出")
 	doAudit    = flag.Bool("audit", false, "執行 metadata 豐富度稽核（讀 DB）後退出")
 	doBackfill = flag.Bool("backfill-dates", false, "從描述解析拍攝日期回填 photos.taken_real 後退出")
+
+	doArchive    = flag.Bool("archive-images", false, "下載所有照片尺寸到本地存檔後退出")
+	archiveDir   = flag.String("archive-dir", "", "存檔根目錄（預設讀 IMAGE_ARCHIVE_DIR，再預設 ./archive）")
+	archiveLimit = flag.Int("limit", 0, "只處理前 N 張（測試用，0=全部）")
+	archivePID   = flag.String("photo-id", "", "只處理單一 photo id（測試用）")
+	skipOriginal = flag.Bool("skip-original", false, "略過原圖，只抓縮圖")
+	onlyOriginal = flag.Bool("only-original", false, "只抓原圖")
 )
 
 func main() {
@@ -49,6 +56,19 @@ func main() {
 			log.Fatal(err)
 		}
 		log.Printf("Backfill taken_real 完成：%d/%d 張解析出拍攝日期", withDate, total)
+		return
+	}
+
+	if *doArchive {
+		if err := runArchive(app, archiveOpts{
+			Root:         resolveArchiveRoot(*archiveDir),
+			Limit:        *archiveLimit,
+			OnlyID:       *archivePID,
+			SkipOriginal: *skipOriginal,
+			OnlyOriginal: *onlyOriginal,
+		}); err != nil {
+			log.Fatal(err)
+		}
 		return
 	}
 
