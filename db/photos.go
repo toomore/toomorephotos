@@ -42,15 +42,20 @@ func (d *DB) UpsertPhoto(ctx context.Context, photoID string, info jsonstruct.Ph
 	if err != nil {
 		return err
 	}
+	var takenReal interface{} // NULL when no date is parseable from the description
+	if tr := ExtractTakenReal(info.Photo.Description.Content); tr != "" {
+		takenReal = tr
+	}
 	_, err = d.pool.Exec(ctx,
-		`INSERT INTO photos (photo_id, info_json, width, height, fetched_at)
-		 VALUES ($1, $2, $3, $4, NOW())
+		`INSERT INTO photos (photo_id, info_json, width, height, taken_real, fetched_at)
+		 VALUES ($1, $2, $3, $4, $5, NOW())
 		 ON CONFLICT (photo_id) DO UPDATE SET
 		   info_json = EXCLUDED.info_json,
 		   width = EXCLUDED.width,
 		   height = EXCLUDED.height,
+		   taken_real = EXCLUDED.taken_real,
 		   fetched_at = NOW()`,
-		photoID, infoJSON, width, height,
+		photoID, infoJSON, width, height, takenReal,
 	)
 	if err != nil {
 		return err
@@ -73,6 +78,56 @@ func (d *DB) UpsertPhoto(ctx context.Context, photoID string, info jsonstruct.Ph
 		}
 	}
 	return nil
+}
+
+// BackfillTakenReal re-derives taken_real for every stored photo from its
+// description text. Returns the number of photos that got a date and the total
+// processed. Safe to re-run; existing values are overwritten.
+func (d *DB) BackfillTakenReal(ctx context.Context) (withDate, total int, err error) {
+	if d == nil || d.pool == nil {
+		return 0, 0, nil
+	}
+	rows, err := d.pool.Query(ctx,
+		`SELECT photo_id, info_json->'photo'->'description'->>'_content' FROM photos`)
+	if err != nil {
+		return 0, 0, err
+	}
+	type rec struct {
+		id   string
+		desc string
+	}
+	var recs []rec
+	for rows.Next() {
+		var id string
+		var desc *string // description content may be SQL NULL
+		if err := rows.Scan(&id, &desc); err != nil {
+			rows.Close()
+			return 0, 0, err
+		}
+		s := ""
+		if desc != nil {
+			s = *desc
+		}
+		recs = append(recs, rec{id: id, desc: s})
+	}
+	rows.Close()
+	if err := rows.Err(); err != nil {
+		return 0, 0, err
+	}
+
+	for _, r := range recs {
+		total++
+		var arg interface{}
+		if tr := ExtractTakenReal(r.desc); tr != "" {
+			arg = tr
+			withDate++
+		}
+		if _, err := d.pool.Exec(ctx,
+			`UPDATE photos SET taken_real = $1 WHERE photo_id = $2`, arg, r.id); err != nil {
+			return withDate, total, err
+		}
+	}
+	return withDate, total, nil
 }
 
 // photoInfoToPhoto converts PhotosGetInfo.Photo to jsonstruct.Photo for list display.
