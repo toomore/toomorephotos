@@ -9,23 +9,39 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 )
 
 const (
-	archiveAPIRatePerSec = 2 // gate Flickr API calls (matches syncRatePerSec)
-	archiveWorkers       = 6 // concurrent CDN downloads per photo
-	archiveHTTPTimeout   = 120 * time.Second
+	archiveAPIRatePerSec   = 2 // gate Flickr API calls (matches syncRatePerSec)
+	archiveWorkers         = 3 // concurrent CDN downloads per photo
+	archiveDownloadsPerSec = 5 // GLOBAL cap on CDN download starts/sec — the real 429 guard
+	archiveHTTPTimeout     = 120 * time.Second
+	archiveMaxAttempts     = 4 // download retries on 429 / transient network errors
 )
 
 type archiveOpts struct {
-	Root         string
-	Limit        int
-	OnlyID       string
-	SkipOriginal bool
-	OnlyOriginal bool
+	Root            string
+	Limit           int
+	OnlyID          string
+	SkipOriginal    bool
+	OnlyOriginal    bool
+	SkipXLarge      bool // skip 3k/4k/5k/6k (Flickr rate-limits these hard; reproducible from original)
+	DownloadsPerSec int  // global download rate (0 = default archiveDownloadsPerSec)
+}
+
+// throttleAbortStreak: if this many photos in a row download nothing but fail
+// (every asset errored, typically HTTP 429), assume Flickr is throttling and
+// abort the run so a supervising loop can wait and retry later.
+const throttleAbortStreak = 20
+
+// isXLargeSuffix reports whether a size suffix is an X-Large (3k/4k/5k/6k…),
+// i.e. a digit followed by 'k'. Plain "k" (Large 2048) is NOT X-Large.
+func isXLargeSuffix(s string) bool {
+	return len(s) >= 2 && s[len(s)-1] == 'k' && s[0] >= '0' && s[0] <= '9'
 }
 
 // resolveArchiveRoot picks the archive root: flag > IMAGE_ARCHIVE_DIR > "./archive".
@@ -114,14 +130,31 @@ func runArchive(app *App, opts archiveOpts) error {
 	hc := &http.Client{Timeout: archiveHTTPTimeout}
 	rate := time.NewTicker(time.Second / archiveAPIRatePerSec)
 	defer rate.Stop()
+	dlRate := opts.DownloadsPerSec
+	if dlRate <= 0 {
+		dlRate = archiveDownloadsPerSec
+	}
+	dlGate := time.NewTicker(time.Second / time.Duration(dlRate))
+	defer dlGate.Stop()
 
 	var tGot, tSkip, tFail int
+	consecFail := 0
 	for i, id := range ids {
 		<-rate.C
-		g, s, f := archiveOne(app, opts.Root, id, hc, opts)
+		g, s, f := archiveOne(app, opts.Root, id, hc, dlGate.C, opts)
 		tGot += g
 		tSkip += s
 		tFail += f
+		switch {
+		case g > 0:
+			consecFail = 0
+		case f > 0:
+			consecFail++
+			if consecFail >= throttleAbortStreak {
+				log.Printf("Archive: 連續 %d 張全部下載失敗（疑似被限流），中止本輪以待重試", consecFail)
+				return fmt.Errorf("suspected throttling after %d consecutive failed photos", consecFail)
+			}
+		}
 		if (i+1)%50 == 0 {
 			log.Printf("Archive: 進度 %d/%d (got=%d skip=%d fail=%d)", i+1, len(ids), tGot, tSkip, tFail)
 		}
@@ -159,15 +192,24 @@ type archiveJob struct {
 }
 
 // archiveOne fetches all sizes for one photo and downloads them concurrently.
-func archiveOne(app *App, root, id string, hc *http.Client, opts archiveOpts) (got, skip, fail int) {
+// dlGate is a shared global rate limiter consumed once per actual network download.
+func archiveOne(app *App, root, id string, hc *http.Client, dlGate <-chan time.Time, opts archiveOpts) (got, skip, fail int) {
 	// Flickr returns "stat" at the top level, which PhotoSizes does not capture,
 	// so gate on whether any sizes actually came back rather than on Sizes.Stat.
+	dir := filepath.Join(root, "photos", id)
+	// Fast path: when only fetching originals, skip the API call entirely if the
+	// original is already on disk — keeps throttle-retry passes from re-scanning
+	// thousands of already-done photos via the API.
+	if opts.OnlyOriginal {
+		if existing, _ := filepath.Glob(filepath.Join(dir, "o.*")); len(existing) > 0 {
+			return 0, 1, 0
+		}
+	}
 	sizes := app.Flickr.PhotosGetSizes(id)
 	if len(sizes.Sizes.Size) == 0 {
 		log.Printf("Archive: %s 跳過 (getSizes 無尺寸資料)", id)
 		return 0, 0, 1
 	}
-	dir := filepath.Join(root, "photos", id)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		log.Printf("Archive: %s mkdir 失敗: %v", id, err)
 		return 0, 0, 1
@@ -190,6 +232,9 @@ func archiveOne(app *App, root, id string, hc *http.Client, opts archiveOpts) (g
 			continue
 		}
 		suffix := suffixFromSource(s.Source)
+		if opts.SkipXLarge && isXLargeSuffix(suffix) {
+			continue
+		}
 		file := suffix + extFromURL(s.Source)
 		jobs = append(jobs, archiveJob{
 			src: s.Source, dst: filepath.Join(dir, file), file: file,
@@ -224,7 +269,7 @@ func archiveOne(app *App, root, id string, hc *http.Client, opts archiveOpts) (g
 		go func(j archiveJob) {
 			defer wg.Done()
 			defer func() { <-sem }()
-			bytes, skipped, err := downloadFile(hc, j.src, j.dst)
+			bytes, skipped, err := downloadFile(hc, j.src, j.dst, dlGate)
 			mu.Lock()
 			defer mu.Unlock()
 			if err != nil {
@@ -257,41 +302,78 @@ func archiveOne(app *App, root, id string, hc *http.Client, opts archiveOpts) (g
 	return got, skip, fail
 }
 
-// downloadFile GETs src to dst atomically (tmp + rename). Skips if dst exists & size>0.
-func downloadFile(hc *http.Client, src, dst string) (int64, bool, error) {
+// downloadFile GETs src to dst atomically (tmp + rename). Skips if dst exists &
+// size>0. Retries on HTTP 429 and transient network errors with backoff
+// (honouring Retry-After when present), since Flickr's CDN rate-limits bursts.
+func downloadFile(hc *http.Client, src, dst string, gate <-chan time.Time) (int64, bool, error) {
 	if fi, err := os.Stat(dst); err == nil && fi.Size() > 0 {
-		return fi.Size(), true, nil
+		return fi.Size(), true, nil // skip: no network, no rate-limit token consumed
 	}
+	var lastErr error
+	for attempt := 0; attempt < archiveMaxAttempts; attempt++ {
+		if gate != nil {
+			<-gate // global rate limit each network attempt (incl. retries)
+		}
+		n, retryAfter, err := tryDownloadOnce(hc, src, dst)
+		if err == nil {
+			return n, false, nil
+		}
+		lastErr = err
+		if attempt < archiveMaxAttempts-1 {
+			wait := retryAfter
+			if wait <= 0 {
+				wait = time.Duration(2<<attempt) * time.Second // 2s, 4s, 8s
+			}
+			time.Sleep(wait)
+		}
+	}
+	return 0, false, lastErr
+}
+
+// tryDownloadOnce performs a single GET+write. On HTTP 429 it returns the
+// suggested wait from Retry-After (0 if absent) so the caller can back off.
+func tryDownloadOnce(hc *http.Client, src, dst string) (int64, time.Duration, error) {
 	resp, err := hc.Get(src)
 	if err != nil {
-		return 0, false, err
+		return 0, 0, err
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode == http.StatusTooManyRequests {
+		ra := time.Duration(0)
+		if s := strings.TrimSpace(resp.Header.Get("Retry-After")); s != "" {
+			if secs, err := strconv.Atoi(s); err == nil && secs > 0 {
+				ra = time.Duration(secs) * time.Second
+			}
+		}
+		io.Copy(io.Discard, resp.Body)
+		return 0, ra, fmt.Errorf("HTTP 429")
+	}
 	if resp.StatusCode != http.StatusOK {
-		return 0, false, fmt.Errorf("HTTP %d", resp.StatusCode)
+		io.Copy(io.Discard, resp.Body)
+		return 0, 0, fmt.Errorf("HTTP %d", resp.StatusCode)
 	}
 	tmp := dst + ".tmp"
 	f, err := os.Create(tmp)
 	if err != nil {
-		return 0, false, err
+		return 0, 0, err
 	}
 	n, err := io.Copy(f, resp.Body)
 	closeErr := f.Close()
 	if err != nil {
 		os.Remove(tmp)
-		return 0, false, err
+		return 0, 0, err
 	}
 	if closeErr != nil {
 		os.Remove(tmp)
-		return 0, false, closeErr
+		return 0, 0, closeErr
 	}
 	if n == 0 {
 		os.Remove(tmp)
-		return 0, false, fmt.Errorf("empty body")
+		return 0, 0, fmt.Errorf("empty body")
 	}
 	if err := os.Rename(tmp, dst); err != nil {
 		os.Remove(tmp)
-		return 0, false, err
+		return 0, 0, err
 	}
-	return n, false, nil
+	return n, 0, nil
 }

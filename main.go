@@ -13,12 +13,14 @@ var (
 	doAudit    = flag.Bool("audit", false, "執行 metadata 豐富度稽核（讀 DB）後退出")
 	doBackfill = flag.Bool("backfill-dates", false, "從描述解析拍攝日期回填 photos.taken_real 後退出")
 
-	doArchive    = flag.Bool("archive-images", false, "下載所有照片尺寸到本地存檔後退出")
-	archiveDir   = flag.String("archive-dir", "", "存檔根目錄（預設讀 IMAGE_ARCHIVE_DIR，再預設 ./archive）")
-	archiveLimit = flag.Int("limit", 0, "只處理前 N 張（測試用，0=全部）")
-	archivePID   = flag.String("photo-id", "", "只處理單一 photo id（測試用）")
-	skipOriginal = flag.Bool("skip-original", false, "略過原圖，只抓縮圖")
-	onlyOriginal = flag.Bool("only-original", false, "只抓原圖")
+	doArchive     = flag.Bool("archive-images", false, "下載所有照片尺寸到本地存檔後退出")
+	archiveDir    = flag.String("archive-dir", "", "存檔根目錄（預設讀 IMAGE_ARCHIVE_DIR，再預設 ./archive）")
+	archiveLimit  = flag.Int("limit", 0, "只處理前 N 張（測試用，0=全部）")
+	archivePID    = flag.String("photo-id", "", "只處理單一 photo id（測試用）")
+	skipOriginal  = flag.Bool("skip-original", false, "略過原圖，只抓縮圖")
+	onlyOriginal  = flag.Bool("only-original", false, "只抓原圖")
+	skipXLarge    = flag.Bool("skip-xlarge", false, "略過超大尺寸 3k/4k/5k/6k（會被 Flickr 限流，可從原圖重縮）")
+	archiveDLRate = flag.Int("dl-rate", 0, "每秒下載數上限（0=預設5；原圖被限流時可調低如 2）")
 )
 
 func main() {
@@ -61,11 +63,13 @@ func main() {
 
 	if *doArchive {
 		if err := runArchive(app, archiveOpts{
-			Root:         resolveArchiveRoot(*archiveDir),
-			Limit:        *archiveLimit,
-			OnlyID:       *archivePID,
-			SkipOriginal: *skipOriginal,
-			OnlyOriginal: *onlyOriginal,
+			Root:            resolveArchiveRoot(*archiveDir),
+			Limit:           *archiveLimit,
+			OnlyID:          *archivePID,
+			SkipOriginal:    *skipOriginal,
+			OnlyOriginal:    *onlyOriginal,
+			SkipXLarge:      *skipXLarge,
+			DownloadsPerSec: *archiveDLRate,
 		}); err != nil {
 			log.Fatal(err)
 		}
