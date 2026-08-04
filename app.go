@@ -15,6 +15,21 @@ import (
 	"github.com/toomore/lazyflickrgo/jsonstruct"
 	"github.com/toomore/toomorephotos/cache"
 	"github.com/toomore/toomorephotos/db"
+	"golang.org/x/sync/singleflight"
+)
+
+// maxConcurrentFlickr caps how many requests may fan out to the Flickr API at
+// the same time. Each fan-out accumulates a whole tag's photo list (~4k
+// entries, ~1.3 MB), so leaving it unbounded let a scraper burst on /p/ grow
+// the process to 1.4 GB and OOM the 2 GB host (2026-07-30, 2026-08-03).
+const maxConcurrentFlickr = 4
+
+// How long a request waits for a Flickr slot before giving up. Related photos
+// are decorative so they give up quickly; the rest are load-bearing and wait
+// a little longer.
+const (
+	relatedFlickrWait = 2 * time.Second
+	defaultFlickrWait = 5 * time.Second
 )
 
 type App struct {
@@ -39,6 +54,35 @@ type App struct {
 	RelatedPhotosCacheTTL time.Duration
 	SitemapCacheTTL      time.Duration
 	FeedCacheTTL         time.Duration
+
+	// flight collapses concurrent misses for the same cache key into one
+	// Flickr fetch.
+	flight singleflight.Group
+	// flickrSem bounds concurrent Flickr fan-out; see maxConcurrentFlickr.
+	flickrSem chan struct{}
+}
+
+// acquireFlickr takes a slot on the Flickr fan-out semaphore, waiting at most
+// wait for one. Callers must call releaseFlickr only when it returns true.
+func (a *App) acquireFlickr(wait time.Duration) bool {
+	if a.flickrSem == nil {
+		return true
+	}
+	timer := time.NewTimer(wait)
+	defer timer.Stop()
+	select {
+	case a.flickrSem <- struct{}{}:
+		return true
+	case <-timer.C:
+		return false
+	}
+}
+
+func (a *App) releaseFlickr() {
+	if a.flickrSem == nil {
+		return
+	}
+	<-a.flickrSem
 }
 
 func newTemplateFuncs(licenses map[string]jsonstruct.License) template.FuncMap {
@@ -171,9 +215,10 @@ func NewApp() (*App, error) {
 		IndexCacheTTL:        10 * time.Minute,
 		PhotoCacheTTL:        30 * 24 * time.Hour,     // 30 天
 		PhotoSizesCacheTTL:   365 * 24 * time.Hour,    // 365 天
-		RelatedPhotosCacheTTL: 1 * time.Hour,
+		RelatedPhotosCacheTTL: 24 * time.Hour,
 		SitemapCacheTTL:      30 * time.Minute,
 		FeedCacheTTL:         30 * time.Minute,
+		flickrSem:            make(chan struct{}, maxConcurrentFlickr),
 	}, nil
 }
 

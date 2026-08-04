@@ -5,6 +5,7 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	"time"
 )
 
 var (
@@ -66,6 +67,17 @@ func main() {
 	app.serveSingle("/base_photo_min.css", "base_photo_min.css")
 	app.serveSingle("/robots.txt", "robots.txt")
 
+	// Timeouts are deliberate: the bare ListenAndServe this replaced let slow
+	// or abandoned connections pile up handlers indefinitely during scraper
+	// bursts.
+	srv := &http.Server{
+		Addr:              *httpPort,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       15 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       60 * time.Second,
+	}
+
 	log.Println("HTTP Port:", *httpPort)
-	log.Println(http.ListenAndServe(*httpPort, nil))
+	log.Println(srv.ListenAndServe())
 }
