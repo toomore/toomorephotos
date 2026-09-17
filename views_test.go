@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"net/http"
 	"net/http/httptest"
@@ -184,5 +185,30 @@ func TestPhotoPageHasBeacon(t *testing.T) {
 	want := `navigator.sendBeacon("/v?p=` + testPhotoID + `")`
 	if !strings.Contains(w.Body.String(), want) {
 		t.Errorf("照片頁沒有輸出 beacon：找不到 %s", want)
+	}
+}
+
+func TestLogRedactsFlickrCredentials(t *testing.T) {
+	var buf bytes.Buffer
+	w := redactWriter{&buf}
+
+	line := []byte("Get:  https://www.flickr.com/services/rest/?api_key=abc123&api_sig=def456&auth_token=tok789&format=json\n")
+	n, err := w.Write(line)
+	if err != nil {
+		t.Fatalf("Write: %v", err)
+	}
+	if n != len(line) {
+		t.Errorf("Write 回傳 %d，io.Writer 必須回報呼叫端的長度 %d", n, len(line))
+	}
+	out := buf.String()
+	for _, secret := range []string{"abc123", "def456", "tok789"} {
+		if strings.Contains(out, secret) {
+			t.Errorf("log 仍含有機密 %q: %s", secret, out)
+		}
+	}
+	for _, keep := range []string{"api_key=REDACTED", "api_sig=REDACTED", "auth_token=REDACTED", "format=json"} {
+		if !strings.Contains(out, keep) {
+			t.Errorf("log 少了 %q: %s", keep, out)
+		}
 	}
 }

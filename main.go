@@ -6,6 +6,7 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -33,6 +34,9 @@ var (
 
 func main() {
 	flag.Parse()
+	// Before anything logs: the first Flickr call happens inside NewApp.
+	log.SetOutput(redactWriter{os.Stderr})
+
 	app, err := NewApp()
 	if err != nil {
 		log.Fatal(err)
