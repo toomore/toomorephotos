@@ -2,8 +2,11 @@ package db
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"testing"
+
+	"github.com/toomore/lazyflickrgo/jsonstruct"
 )
 
 // TestViewsSQL exercises the view queries against a real PostgreSQL, because
@@ -60,5 +63,53 @@ func TestViewsSQL(t *testing.T) {
 	}
 	if top[1].PhotoID != "222" || top[1].Views != 1 {
 		t.Errorf("第二名 = %+v, want 222 共 1 次", top[1])
+	}
+}
+
+// TestGetPhotosByTagIsCaseInsensitive guards the mismatch found on 2026-09-18:
+// photo_tags keeps the tag as typed on Flickr ("Tokyo") while tags.txt is lower
+// case, so an exact match returned nothing and the homepage rendered empty.
+func TestGetPhotosByTagIsCaseInsensitive(t *testing.T) {
+	url := os.Getenv("TEST_DATABASE_URL")
+	if url == "" {
+		t.Skip("TEST_DATABASE_URL 未設定，略過需要 PostgreSQL 的測試")
+	}
+	ctx := context.Background()
+	d, err := Open(ctx, url)
+	if err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+	defer d.Close()
+	if err := d.InitSchema(ctx); err != nil {
+		t.Fatalf("InitSchema: %v", err)
+	}
+	if _, err := d.pool.Exec(ctx, `TRUNCATE photos CASCADE`); err != nil {
+		t.Fatalf("TRUNCATE: %v", err)
+	}
+
+	// jsonstruct 的 tag 型別未匯出，只能從 JSON 還原
+	var info jsonstruct.PhotosGetInfo
+	raw := `{"photo":{"id":"555","secret":"s","server":"1","farm":6,
+	          "title":{"_content":"t"},
+	          "tags":{"tag":[{"raw":"Tokyo"}]},
+	          "dates":{"posted":"1600000000"}}}`
+	if err := json.Unmarshal([]byte(raw), &info); err != nil {
+		t.Fatalf("Unmarshal: %v", err)
+	}
+	if err := d.UpsertPhoto(ctx, "555", info, 1024, 683); err != nil {
+		t.Fatalf("UpsertPhoto: %v", err)
+	}
+
+	for _, want := range []string{"tokyo", "Tokyo", "TOKYO"} {
+		photos, err := d.GetPhotosByTag(ctx, want)
+		if err != nil {
+			t.Fatalf("GetPhotosByTag(%q): %v", want, err)
+		}
+		if len(photos) != 1 {
+			t.Errorf("GetPhotosByTag(%q) 回傳 %d 筆, want 1", want, len(photos))
+		}
+	}
+	if photos, _ := d.GetPhotosByTag(ctx, "kyoto"); len(photos) != 0 {
+		t.Errorf("不相干的 tag 竟然回傳 %d 筆", len(photos))
 	}
 }

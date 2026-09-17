@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/toomore/lazyflickrgo/jsonstruct"
 )
@@ -44,6 +45,15 @@ func (a *App) fromSearch(tags string) []jsonstruct.Photo {
 	return result
 }
 
+// cacheTTLFor shortens the TTL of an empty answer so a single Flickr failure
+// cannot keep a page blank for the full caching period.
+func cacheTTLFor(n int, full time.Duration) time.Duration {
+	if n == 0 {
+		return emptyCacheTTL
+	}
+	return full
+}
+
 func (a *App) getCachedFromSearch(tag string) []jsonstruct.Photo {
 	ctx := context.Background()
 	key := "index:" + tag
@@ -63,7 +73,7 @@ func (a *App) getCachedFromSearch(tag string) []jsonstruct.Photo {
 		}
 		defer a.releaseFlickr()
 		photos := a.fromSearch(tag)
-		_ = a.Cache.Set(ctx, key, photos, a.IndexCacheTTL)
+		_ = a.Cache.Set(ctx, key, photos, cacheTTLFor(len(photos), a.IndexCacheTTL))
 		return photos, nil
 	})
 	result, _ = v.([]jsonstruct.Photo)
@@ -312,7 +322,7 @@ func (a *App) getCachedAllPhotos() []jsonstruct.Photo {
 		defer a.releaseFlickr()
 		var photos []jsonstruct.Photo
 		a.allPhotos(&photos)
-		_ = a.Cache.Set(ctx, key, photos, a.SitemapCacheTTL)
+		_ = a.Cache.Set(ctx, key, photos, cacheTTLFor(len(photos), a.SitemapCacheTTL))
 		return photos, nil
 	})
 	result, _ = v.([]jsonstruct.Photo)

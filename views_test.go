@@ -212,3 +212,13 @@ func TestLogRedactsFlickrCredentials(t *testing.T) {
 		}
 	}
 }
+
+func TestCacheTTLForEmptyResult(t *testing.T) {
+	full := 10 * time.Minute
+	if got := cacheTTLFor(0, full); got != emptyCacheTTL {
+		t.Errorf("空結果 TTL = %v, want %v（否則 Flickr 失敗一次就讓首頁空白整個 TTL）", got, emptyCacheTTL)
+	}
+	if got := cacheTTLFor(30, full); got != full {
+		t.Errorf("正常結果 TTL = %v, want %v", got, full)
+	}
+}

@@ -30,6 +30,10 @@ const maxConcurrentFlickr = 4
 const (
 	relatedFlickrWait = 2 * time.Second
 	defaultFlickrWait = 5 * time.Second
+	// emptyCacheTTL keeps one empty or failed Flickr answer from blanking a
+	// page for the whole TTL. On 2026-09-18 an empty tag search was cached like
+	// a real result and left the homepage empty for 10 minutes at a time.
+	emptyCacheTTL = 30 * time.Second
 )
 
 type App struct {

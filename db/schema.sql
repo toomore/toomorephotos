@@ -21,6 +21,8 @@ CREATE TABLE IF NOT EXISTS photo_tags (
 );
 
 CREATE INDEX IF NOT EXISTS idx_photo_tags_tag_photo ON photo_tags(tag, photo_id);
+-- Tag lookups are case-insensitive; the plain (tag, photo_id) index cannot serve them.
+CREATE INDEX IF NOT EXISTS idx_photo_tags_lower_tag ON photo_tags(lower(tag), photo_id);
 CREATE INDEX IF NOT EXISTS idx_photo_tags_photo ON photo_tags(photo_id);
 CREATE INDEX IF NOT EXISTS idx_photos_taken_real ON photos(taken_real);
 

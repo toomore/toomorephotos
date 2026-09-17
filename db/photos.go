@@ -149,10 +149,13 @@ func (d *DB) GetPhotosByTag(ctx context.Context, tag string) ([]jsonstruct.Photo
 	if d == nil || d.pool == nil {
 		return nil, nil
 	}
+	// Case-insensitive on purpose: photo_tags keeps the tag exactly as typed on
+	// Flickr ("Tokyo"), while tags.txt is lower case, so an exact match dropped
+	// most of a tag's photos (tokyo 0/675, taiwan 92/887).
 	rows, err := d.pool.Query(ctx,
 		`SELECT p.info_json FROM photos p
 		 INNER JOIN photo_tags pt ON p.photo_id = pt.photo_id
-		 WHERE pt.tag = $1 `+orderByPosted,
+		 WHERE lower(pt.tag) = lower($1) `+orderByPosted,
 		tag,
 	)
 	if err != nil {
