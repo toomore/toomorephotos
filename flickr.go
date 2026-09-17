@@ -57,8 +57,16 @@ func (a *App) getCachedFromSearch(tag string) []jsonstruct.Photo {
 			return photos
 		}
 	}
-	result = a.fromSearch(tag)
-	_ = a.Cache.Set(ctx, key, result, a.IndexCacheTTL)
+	v, _, _ := a.flight.Do(key, func() (interface{}, error) {
+		if !a.acquireFlickr(defaultFlickrWait) {
+			return []jsonstruct.Photo(nil), nil
+		}
+		defer a.releaseFlickr()
+		photos := a.fromSearch(tag)
+		_ = a.Cache.Set(ctx, key, photos, a.IndexCacheTTL)
+		return photos, nil
+	})
+	result, _ = v.([]jsonstruct.Photo)
 	return result
 }
 
@@ -75,15 +83,31 @@ func (a *App) getCachedPhotosGetInfo(photoID string) jsonstruct.PhotosGetInfo {
 			return dbInfo
 		}
 	}
-	info = a.Flickr.PhotosGetInfo(photoID)
-	_ = a.Cache.Set(ctx, key, info, a.PhotoCacheTTL)
-	if a.DB != nil && info.Common.Stat == "ok" {
-		if w, h, ok := a.getCachedPhotosGetSizes(photoID); ok {
-			_ = a.DB.UpsertPhoto(ctx, photoID, info, w, h)
-		} else {
-			_ = a.DB.UpsertPhoto(ctx, photoID, info, 0, 0)
+	v, _, _ := a.flight.Do(key, func() (interface{}, error) {
+		if !a.acquireFlickr(defaultFlickrWait) {
+			return jsonstruct.PhotosGetInfo{}, nil
 		}
-	}
+		fetched := a.Flickr.PhotosGetInfo(photoID)
+		// Released before the nested sizes lookup below, which takes a slot of
+		// its own — holding two at once could stall every slot.
+		a.releaseFlickr()
+		// Only successes are cached: a failed lookup used to be stored for
+		// PhotoCacheTTL (30 days), so one bad Flickr reply 404'd the photo for
+		// a month.
+		if fetched.Common.Stat != "ok" {
+			return fetched, nil
+		}
+		_ = a.Cache.Set(ctx, key, fetched, a.PhotoCacheTTL)
+		if a.DB != nil {
+			if w, h, ok := a.getCachedPhotosGetSizes(photoID); ok {
+				_ = a.DB.UpsertPhoto(ctx, photoID, fetched, w, h)
+			} else {
+				_ = a.DB.UpsertPhoto(ctx, photoID, fetched, 0, 0)
+			}
+		}
+		return fetched, nil
+	})
+	info, _ = v.(jsonstruct.PhotosGetInfo)
 	return info
 }
 
@@ -107,29 +131,43 @@ func (a *App) getCachedPhotosGetSizes(photoID string) (width, height int64, ok b
 			return w, h, true
 		}
 	}
-	sizes := a.Flickr.PhotosGetSizes(photoID)
-	preferredLabels := []string{"Large", "Large 1024", "Large 1600", "Medium 800", "Medium 640"}
-	for _, label := range preferredLabels {
-		for _, s := range sizes.Sizes.Size {
-			if s.Label == label {
-				w, errW := strconv.ParseInt(string(s.Width), 10, 64)
-				h, errH := strconv.ParseInt(string(s.Height), 10, 64)
-				if errW == nil && errH == nil && w > 0 && h > 0 {
-					_ = a.Cache.Set(ctx, key, photoSizesVal{Width: w, Height: h}, a.PhotoSizesCacheTTL)
-					return w, h, true
+	res, _, _ := a.flight.Do(key, func() (interface{}, error) {
+		if !a.acquireFlickr(defaultFlickrWait) {
+			return photoSizesVal{}, nil
+		}
+		defer a.releaseFlickr()
+
+		sizes := a.Flickr.PhotosGetSizes(photoID)
+		preferredLabels := []string{"Large", "Large 1024", "Large 1600", "Medium 800", "Medium 640"}
+		for _, label := range preferredLabels {
+			for _, s := range sizes.Sizes.Size {
+				if s.Label == label {
+					w, errW := strconv.ParseInt(string(s.Width), 10, 64)
+					h, errH := strconv.ParseInt(string(s.Height), 10, 64)
+					if errW == nil && errH == nil && w > 0 && h > 0 {
+						val := photoSizesVal{Width: w, Height: h}
+						_ = a.Cache.Set(ctx, key, val, a.PhotoSizesCacheTTL)
+						return val, nil
+					}
+					break
 				}
-				break
 			}
 		}
-	}
-	// Fallback: use first available size with valid dimensions
-	for _, s := range sizes.Sizes.Size {
-		w, errW := strconv.ParseInt(string(s.Width), 10, 64)
-		h, errH := strconv.ParseInt(string(s.Height), 10, 64)
-		if errW == nil && errH == nil && w > 0 && h > 0 {
-			_ = a.Cache.Set(ctx, key, photoSizesVal{Width: w, Height: h}, a.PhotoSizesCacheTTL)
-			return w, h, true
+		// Fallback: use first available size with valid dimensions
+		for _, s := range sizes.Sizes.Size {
+			w, errW := strconv.ParseInt(string(s.Width), 10, 64)
+			h, errH := strconv.ParseInt(string(s.Height), 10, 64)
+			if errW == nil && errH == nil && w > 0 && h > 0 {
+				val := photoSizesVal{Width: w, Height: h}
+				_ = a.Cache.Set(ctx, key, val, a.PhotoSizesCacheTTL)
+				return val, nil
+			}
 		}
+		return photoSizesVal{}, nil
+	})
+
+	if got, _ := res.(photoSizesVal); got.Width > 0 && got.Height > 0 {
+		return got.Width, got.Height, true
 	}
 	return 0, 0, false
 }
@@ -227,8 +265,19 @@ func (a *App) getCachedRelatedPhotos(photoID string, tagRaws []string) []jsonstr
 			return photos
 		}
 	}
-	result = a.getRelatedPhotos(photoID, tagRaws)
-	_ = a.Cache.Set(ctx, key, result, a.RelatedPhotosCacheTTL)
+	// Related photos are decorative. Rather than let a burst of misses each
+	// pull a whole tag's photo list from Flickr, give up after a short wait and
+	// render the page without them.
+	v, _, _ := a.flight.Do(key, func() (interface{}, error) {
+		if !a.acquireFlickr(relatedFlickrWait) {
+			return []jsonstruct.Photo(nil), nil
+		}
+		defer a.releaseFlickr()
+		photos := a.getRelatedPhotos(photoID, tagRaws)
+		_ = a.Cache.Set(ctx, key, photos, a.RelatedPhotosCacheTTL)
+		return photos, nil
+	})
+	result, _ = v.([]jsonstruct.Photo)
 	return result
 }
 
@@ -256,7 +305,16 @@ func (a *App) getCachedAllPhotos() []jsonstruct.Photo {
 			return photos
 		}
 	}
-	a.allPhotos(&result)
-	_ = a.Cache.Set(ctx, key, result, a.SitemapCacheTTL)
+	v, _, _ := a.flight.Do(key, func() (interface{}, error) {
+		if !a.acquireFlickr(defaultFlickrWait) {
+			return []jsonstruct.Photo(nil), nil
+		}
+		defer a.releaseFlickr()
+		var photos []jsonstruct.Photo
+		a.allPhotos(&photos)
+		_ = a.Cache.Set(ctx, key, photos, a.SitemapCacheTTL)
+		return photos, nil
+	})
+	result, _ = v.([]jsonstruct.Photo)
 	return result
 }

@@ -94,15 +94,15 @@ func main() {
 	app.serveSingle("/base_photo_min.css", "base_photo_min.css")
 	app.serveSingle("/robots.txt", "robots.txt")
 
-	// Timeouts keep slow or stalled clients from holding goroutines and memory.
-	// WriteTimeout matches nginx's default proxy_read_timeout (60s): nginx gives
-	// up on a slower response anyway.
+	// Timeouts are deliberate: the bare ListenAndServe this replaced let slow
+	// or abandoned connections pile up handlers indefinitely during scraper
+	// bursts.
 	srv := &http.Server{
 		Addr:              *httpPort,
-		ReadHeaderTimeout: 10 * time.Second,
-		ReadTimeout:       30 * time.Second,
-		WriteTimeout:      60 * time.Second,
-		IdleTimeout:       120 * time.Second,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       15 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		IdleTimeout:       60 * time.Second,
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
