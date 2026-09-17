@@ -62,9 +62,10 @@ func (a *App) index(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("ETag", etagStr)
 		w.Header().Set("Cache-Control", "max-age=120")
 		result := a.getCachedFromSearch(a.Tags[modValue])
-		min := 30
-		if len(result) < 30 {
-			min = len(result)
+		wall := dailyPick(result, a.Tags[modValue], time.Now().YearDay(), indexPhotoCount)
+		prefetch := wall
+		if len(prefetch) > indexPrefetchCount {
+			prefetch = prefetch[:indexPrefetchCount]
 		}
 		allPhotos := a.getCachedAllPhotos()
 		var featured *jsonstruct.Photo
@@ -84,12 +85,64 @@ func (a *App) index(w http.ResponseWriter, r *http.Request) {
 			Featured       *jsonstruct.Photo
 			FeaturedWidth  int64
 			FeaturedHeight int64
-		}{result, result[:min], featured, featuredWidth, featuredHeight}
+		}{wall, prefetch, featured, featuredWidth, featuredHeight}
 		if err := a.TplIndex.Execute(w, data); err != nil {
 			log.Printf("template execute error: %v", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		}
 	}
+}
+
+const (
+	// indexPhotoCount caps the wall. A tag can hold thousands of photos, and
+	// rendering all of them made the homepage 539 KB for "japan".
+	indexPhotoCount = 100
+	// indexPrefetchCount is how many of those photo pages get rel="prefetch".
+	indexPrefetchCount = 30
+)
+
+// dailyPick selects photos that stay the same for a given tag and day, so the
+// page still matches its ETag and whatever Cloudflare cached, while a different
+// slice of the archive surfaces each day.
+//
+// It walks the list with a fixed stride rather than shuffling a copy: the
+// homepage is the hottest page here, and copying a few thousand structs per
+// request is the kind of allocation the 2026-07 memory incident was made of.
+func dailyPick(photos []jsonstruct.Photo, tag string, day, n int) []jsonstruct.Photo {
+	total := len(photos)
+	if total <= n {
+		return photos
+	}
+
+	h := uint32(2166136261) // FNV-1a over the tag and the day
+	for _, c := range tag {
+		h = (h ^ uint32(c)) * 16777619
+	}
+	h = (h ^ uint32(day)) * 16777619
+
+	start := int(h % uint32(total))
+	// A stride coprime with the length never repeats a photo; 1 always is, so
+	// the search terminates.
+	stride := int(h>>8)%(total-1) + 1
+	for gcd(stride, total) != 1 {
+		stride++
+		if stride >= total {
+			stride = 1
+		}
+	}
+
+	picked := make([]jsonstruct.Photo, 0, n)
+	for i := 0; i < n; i++ {
+		picked = append(picked, photos[(start+i*stride)%total])
+	}
+	return picked
+}
+
+func gcd(a, b int) int {
+	for b != 0 {
+		a, b = b, a%b
+	}
+	return a
 }
 
 // tagIndex picks the homepage tag: ?t=N when given, otherwise rotate by minute.
