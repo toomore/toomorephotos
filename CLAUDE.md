@@ -153,7 +153,7 @@ Cloudflare → nginx (octo2026) ─┬─ /、/p/、/rss …  → Go app (natsu:
 
 ## 注意事項
 
-- 首頁的 `{{range .R}}` 會渲染該 tag 的**全部**照片，`.L`（前 30 張）只用在 `rel="prefetch"`
+- 首頁照片牆是 `dailyPick` 以 (tag, 當天日期) 挑出的固定 100 張（`indexPhotoCount`），前 30 張同時用於 `rel="prefetch"`。同一天同一個 tag 的結果是確定性的，ETag 與 Cloudflare 的 HTML 快取才不會說謊
 - Feed 輸出最近 100 張
 - 所有 log 輸出到 stdout/stderr，並經 `redactWriter` 遮蔽金鑰
 - `-sync` 應只從單一 instance 執行
