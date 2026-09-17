@@ -31,10 +31,10 @@ func getTags(path string) ([]string, error) {
 
 func (a *App) fromSearch(tags string) []jsonstruct.Photo {
 	args := map[string]string{
-		"tags":      tags,
-		"tag_mode":  "all",
-		"sort":      "date-posted-desc",
-		"user_id":   a.UserID,
+		"tags":     tags,
+		"tag_mode": "all",
+		"sort":     "date-posted-desc",
+		"user_id":  a.UserID,
 	}
 
 	var result []jsonstruct.Photo
@@ -283,8 +283,8 @@ func (a *App) getCachedRelatedPhotos(photoID string, tagRaws []string) []jsonstr
 
 func (a *App) allPhotos(result *[]jsonstruct.Photo) {
 	args := map[string]string{
-		"sort":     "date-posted-desc",
-		"user_id":  a.UserID,
+		"sort":    "date-posted-desc",
+		"user_id": a.UserID,
 	}
 
 	for _, val := range a.Flickr.PhotosSearch(args) {

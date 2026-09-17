@@ -21,8 +21,8 @@ func runSync(app *App) error {
 	// 1. Get all photo IDs
 	var allIDs []string
 	args := map[string]string{
-		"sort":     "date-posted-desc",
-		"user_id":  app.UserID,
+		"sort":    "date-posted-desc",
+		"user_id": app.UserID,
 	}
 	for _, page := range app.Flickr.PhotosSearch(args) {
 		for _, p := range page.Photos.Photo {
