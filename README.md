@@ -114,6 +114,9 @@ docker-compose 會自動啟動 PostgreSQL；首次啟動時 app 會建立 `photo
 | `./toomorephotos -p :8081` | Specify port |
 | `./toomorephotos -sync` | 從 Flickr 同步照片 metadata 至 DB 後退出 / Sync photo metadata from Flickr to DB, then exit |
 | `./toomorephotos -views` | 列出照片瀏覽排行後退出（可加 `-views-days` `-views-top`）/ Print the photo view ranking, then exit |
+| `./toomorephotos -audit` | DB metadata 豐富度稽核（唯讀）後退出 / Audit stored metadata richness (read-only), then exit |
+| `./toomorephotos -backfill-dates` | 從描述解析拍攝日期回填 `taken_real` 後退出 / Backfill taken_real from descriptions, then exit |
+| `./toomorephotos -archive-images` | 下載所有尺寸與原圖到本地存檔後退出 / Archive every photo size and original locally, then exit |
 | `REDIS_URL=redis://localhost:6379 ./toomorephotos` | Use Redis cache |
 | `./toomorephotos >> ./log.log 2>&1 &` | Run in background |
 | `make start` | Start 4 instances (ports 8080–8083) |
@@ -158,6 +161,9 @@ docker compose exec postgres pg_dump -U toomorephotos toomorephotos > backup.sql
 | `flickr.go` | Flickr API, getTags, DB-first logic |
 | `sync.go` | Sync: Flickr → DB |
 | `views.go` | 瀏覽計數：beacon handler、批次寫入、排行輸出 / View counting: beacon handler, batched writes, ranking |
+| `audit.go` | `-audit`：metadata 稽核 / Metadata richness audit |
+| `download.go` | `-archive-images`：本地圖片存檔 / Local image archive downloader |
+| `logredact.go` | log 遮蔽 Flickr 金鑰 / Redacts Flickr credentials from logs |
 | `db/` | PostgreSQL schema, photos CRUD |
 
 See [CLAUDE.md](CLAUDE.md) for full architecture documentation.
