@@ -6,7 +6,6 @@ import (
 	"hash"
 	"io"
 	"log"
-	"math"
 	"net/http"
 	"os"
 	"strconv"
@@ -16,7 +15,16 @@ import (
 )
 
 func logs(r *http.Request, note string) {
-	log.Println(r.Header.Get("X-Real-Ip"), r.Method, r.RequestURI, r.UserAgent(), note)
+	log.Println(clientIP(r), r.Method, r.RequestURI, r.UserAgent(), note)
+}
+
+// clientIP returns the visitor's address. In production nginx sets X-Real-Ip
+// to the Cloudflare edge, so prefer the CF-Connecting-IP header Cloudflare adds.
+func clientIP(r *http.Request) string {
+	if ip := r.Header.Get("CF-Connecting-IP"); ip != "" {
+		return ip
+	}
+	return r.Header.Get("X-Real-Ip")
 }
 
 func (a *App) serveSingle(pattern string, filename string) {
@@ -41,13 +49,7 @@ func (a *App) serveSingle(pattern string, filename string) {
 
 func (a *App) index(w http.ResponseWriter, r *http.Request) {
 	logs(r, "")
-	var modValue int
-	var err error
-	if modValue, err = strconv.Atoi(r.URL.Query().Get("t")); err == nil {
-		modValue = int(math.Mod(float64(modValue), float64(len(a.Tags))))
-	} else {
-		modValue = int(math.Mod(float64(time.Now().Minute()), float64(len(a.Tags))))
-	}
+	modValue := tagIndex(r.URL.Query().Get("t"), len(a.Tags), time.Now())
 	etagStr := fmt.Sprintf("W/\"%d-%s-%d\"", modValue, a.Tags[modValue], time.Now().YearDay())
 
 	w.Header().Set("X-Tags", a.Tags[modValue])
@@ -90,6 +92,20 @@ func (a *App) index(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// tagIndex picks the homepage tag: ?t=N when given, otherwise rotate by minute.
+// The result is always in [0, n), including for negative N.
+func tagIndex(t string, n int, now time.Time) int {
+	v, err := strconv.Atoi(t)
+	if err != nil {
+		v = now.Minute()
+	}
+	v %= n
+	if v < 0 {
+		v += n
+	}
+	return v
+}
+
 func (a *App) photo(w http.ResponseWriter, r *http.Request) {
 	logs(r, "")
 	match := a.PhotoPageExpr.FindStringSubmatch(r.RequestURI)
@@ -121,6 +137,9 @@ func (a *App) photo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Without it nginx's proxy_cache never stores /p/. Set before the 304 branch
+	// so revalidated responses carry it too.
+	w.Header().Set("Cache-Control", "max-age=600")
 	if r.Header.Get("If-None-Match") == etagStr {
 		logs(r, "[304]")
 		w.WriteHeader(http.StatusNotModified)
@@ -140,12 +159,12 @@ func (a *App) photo(w http.ResponseWriter, r *http.Request) {
 		}
 		relatedPhotos := a.getCachedRelatedPhotos(photono, tagRaws)
 		data := struct {
-			Photo                 interface{}
-			Width                 int64
-			Height                int64
-			PaddingBottomPercent  float64
-			RelatedPhotos         []jsonstruct.Photo
-			MapboxToken           string
+			Photo                interface{}
+			Width                int64
+			Height               int64
+			PaddingBottomPercent float64
+			RelatedPhotos        []jsonstruct.Photo
+			MapboxToken          string
 		}{photoinfo.Photo, width, height, paddingBottomPercent, relatedPhotos, a.MapboxToken}
 		if err := a.TplPhoto.Execute(w, data); err != nil {
 			log.Printf("template execute error: %v", err)

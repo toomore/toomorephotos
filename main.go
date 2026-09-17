@@ -2,9 +2,13 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"log"
 	"net/http"
+	"os/signal"
+	"syscall"
+	"time"
 )
 
 var (
@@ -90,6 +94,37 @@ func main() {
 	app.serveSingle("/base_photo_min.css", "base_photo_min.css")
 	app.serveSingle("/robots.txt", "robots.txt")
 
+	// Timeouts keep slow or stalled clients from holding goroutines and memory.
+	// WriteTimeout matches nginx's default proxy_read_timeout (60s): nginx gives
+	// up on a slower response anyway.
+	srv := &http.Server{
+		Addr:              *httpPort,
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		WriteTimeout:      60 * time.Second,
+		IdleTimeout:       120 * time.Second,
+	}
+
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+	shutdownDone := make(chan struct{})
+	go func() {
+		<-ctx.Done()
+		log.Println("Shutting down HTTP server")
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := srv.Shutdown(shutdownCtx); err != nil {
+			log.Println("HTTP shutdown:", err)
+		}
+		close(shutdownDone)
+	}()
+
 	log.Println("HTTP Port:", *httpPort)
-	log.Println(http.ListenAndServe(*httpPort, nil))
+	if err := srv.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
+		log.Println(err)
+		return
+	}
+	// ListenAndServe returns as soon as Shutdown starts; wait for in-flight
+	// requests to finish before the deferred DB.Close runs.
+	<-shutdownDone
 }
