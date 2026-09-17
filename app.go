@@ -46,14 +46,17 @@ type App struct {
 	Cache cache.Cache
 	DB    *db.DB
 
+	// Views batches photo page views; nil when DATABASE_URL is unset.
+	Views viewRecorder
+
 	MapboxToken string
 
-	IndexCacheTTL        time.Duration
-	PhotoCacheTTL        time.Duration
-	PhotoSizesCacheTTL   time.Duration
+	IndexCacheTTL         time.Duration
+	PhotoCacheTTL         time.Duration
+	PhotoSizesCacheTTL    time.Duration
 	RelatedPhotosCacheTTL time.Duration
-	SitemapCacheTTL      time.Duration
-	FeedCacheTTL         time.Duration
+	SitemapCacheTTL       time.Duration
+	FeedCacheTTL          time.Duration
 
 	// flight collapses concurrent misses for the same cache key into one
 	// Flickr fetch.
@@ -200,25 +203,25 @@ func NewApp() (*App, error) {
 	}
 
 	return &App{
-		Flickr:               f,
-		Licenses:             licenses,
-		Tags:                 tags,
-		UserID:               userID,
-		TplIndex:             tplIndex,
-		TplPhoto:             tplPhoto,
-		TplSitemap:           tplSitemap,
-		HashCache:            make(map[string]string),
-		PhotoPageExpr:        regexp.MustCompile(`/p/([0-9]+)-?(.+)?`),
-		Cache:                cache.New(),
-		DB:                   database,
-		MapboxToken:          os.Getenv("MAPBOX_ACCESS_TOKEN"),
-		IndexCacheTTL:        10 * time.Minute,
-		PhotoCacheTTL:        30 * 24 * time.Hour,     // 30 天
-		PhotoSizesCacheTTL:   365 * 24 * time.Hour,    // 365 天
+		Flickr:                f,
+		Licenses:              licenses,
+		Tags:                  tags,
+		UserID:                userID,
+		TplIndex:              tplIndex,
+		TplPhoto:              tplPhoto,
+		TplSitemap:            tplSitemap,
+		HashCache:             make(map[string]string),
+		PhotoPageExpr:         regexp.MustCompile(`/p/([0-9]+)-?(.+)?`),
+		Cache:                 cache.New(),
+		DB:                    database,
+		MapboxToken:           os.Getenv("MAPBOX_ACCESS_TOKEN"),
+		IndexCacheTTL:         10 * time.Minute,
+		PhotoCacheTTL:         30 * 24 * time.Hour,  // 30 天
+		PhotoSizesCacheTTL:    365 * 24 * time.Hour, // 365 天
 		RelatedPhotosCacheTTL: 24 * time.Hour,
-		SitemapCacheTTL:      30 * time.Minute,
-		FeedCacheTTL:         30 * time.Minute,
-		flickrSem:            make(chan struct{}, maxConcurrentFlickr),
+		SitemapCacheTTL:       30 * time.Minute,
+		FeedCacheTTL:          30 * time.Minute,
+		flickrSem:             make(chan struct{}, maxConcurrentFlickr),
 	}, nil
 }
 

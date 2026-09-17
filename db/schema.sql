@@ -23,3 +23,15 @@ CREATE TABLE IF NOT EXISTS photo_tags (
 CREATE INDEX IF NOT EXISTS idx_photo_tags_tag_photo ON photo_tags(tag, photo_id);
 CREATE INDEX IF NOT EXISTS idx_photo_tags_photo ON photo_tags(photo_id);
 CREATE INDEX IF NOT EXISTS idx_photos_taken_real ON photos(taken_real);
+
+-- photo_views: daily per-photo view counts fed by the /v beacon.
+-- No foreign key on purpose: a view may arrive for a photo that sync has not
+-- stored yet, and losing the count would be worse than an orphan row.
+CREATE TABLE IF NOT EXISTS photo_views (
+    photo_id VARCHAR(20) NOT NULL,
+    day      DATE NOT NULL,
+    views    BIGINT NOT NULL DEFAULT 0,
+    PRIMARY KEY (photo_id, day)
+);
+
+CREATE INDEX IF NOT EXISTS idx_photo_views_day ON photo_views(day);

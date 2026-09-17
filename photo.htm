@@ -71,6 +71,14 @@
   else img.addEventListener('load', show);
 })();
 </script>
+<script>
+(function(){
+  // Counts this read. Runs in the browser on purpose: Cloudflare serves most
+  // of these pages from its cache, so the server never sees the request.
+  if (!navigator.sendBeacon || navigator.webdriver || navigator.doNotTrack === "1") return;
+  navigator.sendBeacon("/v?p={{.Photo.ID}}");
+})();
+</script>
 {{- end}}
 
 {{define "jsonld" -}}

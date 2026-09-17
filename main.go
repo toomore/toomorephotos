@@ -25,6 +25,10 @@ var (
 	onlyOriginal  = flag.Bool("only-original", false, "只抓原圖")
 	skipXLarge    = flag.Bool("skip-xlarge", false, "略過超大尺寸 3k/4k/5k/6k（會被 Flickr 限流，可從原圖重縮）")
 	archiveDLRate = flag.Int("dl-rate", 0, "每秒下載數上限（0=預設5；原圖被限流時可調低如 2）")
+
+	doViews   = flag.Bool("views", false, "列出照片瀏覽排行（讀 DB）後退出")
+	viewsDays = flag.Int("views-days", 7, "配合 -views：統計最近幾天")
+	viewsTop  = flag.Int("views-top", 20, "配合 -views：列出前幾名")
 )
 
 func main() {
@@ -80,6 +84,23 @@ func main() {
 		return
 	}
 
+	if *doViews {
+		if err := runViewsReport(app, *viewsDays, *viewsTop); err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
+
+	// Page views are collected here rather than in the photo handler because
+	// Cloudflare answers most /p/ requests from its cache.
+	var views *viewCollector
+	if app.DB != nil {
+		views = newViewCollector(app.DB)
+		app.Views = views
+	} else {
+		log.Println("Views: DATABASE_URL 未設定，不記錄瀏覽數")
+	}
+
 	http.HandleFunc("/", app.index)
 	http.HandleFunc("/p/", app.photo)
 	http.HandleFunc("/sitemap/", app.sitemap)
@@ -87,6 +108,7 @@ func main() {
 	http.HandleFunc("/atom", app.atom)
 	http.HandleFunc("/fr", app.notFound)
 	http.HandleFunc("/health", app.health)
+	http.HandleFunc("/v", app.view)
 
 	app.serveSingle("/favicon.ico", "favicon.ico")
 	app.serveSingle("/jquery.unveil.min.js", "jquery.unveil.min.js")
@@ -107,6 +129,17 @@ func main() {
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
+
+	viewsDone := make(chan struct{})
+	if views != nil {
+		go func() {
+			defer close(viewsDone)
+			views.Run(ctx)
+		}()
+	} else {
+		close(viewsDone)
+	}
+
 	shutdownDone := make(chan struct{})
 	go func() {
 		<-ctx.Done()
@@ -125,6 +158,8 @@ func main() {
 		return
 	}
 	// ListenAndServe returns as soon as Shutdown starts; wait for in-flight
-	// requests to finish before the deferred DB.Close runs.
+	// requests to finish, then for the last batch of views to be written,
+	// before the deferred DB.Close runs.
 	<-shutdownDone
+	<-viewsDone
 }

@@ -11,7 +11,11 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-const keyPrefix = "toomorephotos:"
+const (
+	keyPrefix = "toomorephotos:"
+	// memoryEvictPeriod is how often expired entries are swept.
+	memoryEvictPeriod = 10 * time.Minute
+)
 
 // Cache defines the interface for cache operations.
 type Cache interface {
@@ -26,13 +30,31 @@ type MemoryCache struct {
 }
 
 type memoryEntry struct {
-	data     []byte
+	data      []byte
 	expiresAt time.Time
 }
 
 // NewMemoryCache creates a new in-memory cache.
 func NewMemoryCache() *MemoryCache {
-	return &MemoryCache{store: make(map[string]memoryEntry)}
+	m := &MemoryCache{store: make(map[string]memoryEntry)}
+	go m.evictExpired(memoryEvictPeriod)
+	return m
+}
+
+// evictExpired drops timed-out entries. Get already ignores them, but without
+// this the map only ever grows: the view dedupe keys alone add one entry per
+// visitor, photo and day.
+func (m *MemoryCache) evictExpired(every time.Duration) {
+	for range time.Tick(every) {
+		now := time.Now()
+		m.mu.Lock()
+		for k, ent := range m.store {
+			if now.After(ent.expiresAt) {
+				delete(m.store, k)
+			}
+		}
+		m.mu.Unlock()
+	}
 }
 
 func (m *MemoryCache) Get(ctx context.Context, key string, dest interface{}) (bool, error) {

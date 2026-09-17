@@ -113,6 +113,7 @@ docker-compose 會自動啟動 PostgreSQL；首次啟動時 app 會建立 `photo
 | `./toomorephotos` | Single instance (port 8080) |
 | `./toomorephotos -p :8081` | Specify port |
 | `./toomorephotos -sync` | 從 Flickr 同步照片 metadata 至 DB 後退出 / Sync photo metadata from Flickr to DB, then exit |
+| `./toomorephotos -views` | 列出照片瀏覽排行後退出（可加 `-views-days` `-views-top`）/ Print the photo view ranking, then exit |
 | `REDIS_URL=redis://localhost:6379 ./toomorephotos` | Use Redis cache |
 | `./toomorephotos >> ./log.log 2>&1 &` | Run in background |
 | `make start` | Start 4 instances (ports 8080–8083) |
@@ -156,9 +157,27 @@ docker compose exec postgres pg_dump -U toomorephotos toomorephotos > backup.sql
 | `feed.go` | RSS/Atom, feed cache |
 | `flickr.go` | Flickr API, getTags, DB-first logic |
 | `sync.go` | Sync: Flickr → DB |
+| `views.go` | 瀏覽計數：beacon handler、批次寫入、排行輸出 / View counting: beacon handler, batched writes, ranking |
 | `db/` | PostgreSQL schema, photos CRUD |
 
 See [CLAUDE.md](CLAUDE.md) for full architecture documentation.
+
+---
+
+## 瀏覽統計 / View Counting
+
+照片頁載入後會以 `navigator.sendBeacon` 打一次 `POST /v?p={photoid}`，程式批次累加寫入
+`photo_views`（每天一列）。需要 `DATABASE_URL`；未設定時不記錄。
+
+計數放在瀏覽器而不是 `/p/` handler，是因為 Cloudflare 會直接用快取回應大部分照片頁，
+那些請求根本不會到達後端。同時也會過濾掉：爬蟲 UA、瀏覽器的 prefetch、開了 Do Not Track
+的訪客，以及同一位訪客當天對同一張照片的重複載入（以加鹽雜湊後的位址判斷，不存原始 IP，
+一天後過期）。
+
+```bash
+./toomorephotos -views                      # 最近 7 天前 20 名
+./toomorephotos -views -views-days 30        # 最近 30 天
+```
 
 ---
 
@@ -172,3 +191,4 @@ See [CLAUDE.md](CLAUDE.md) for full architecture documentation.
 | `/rss` | RSS feed |
 | `/atom` | Atom feed |
 | `/health` | Health check |
+| `/v?p={photoid}` | 瀏覽計數 beacon（POST，回 204）/ View beacon (POST, answers 204) |
