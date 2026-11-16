@@ -4,15 +4,16 @@
                 <span class="photo-blur-inner">
                     <img class="photo-blur-placeholder" src="/f/m/{{.Photo.Farm}}/{{.Photo.Server}}/{{.Photo.Secret}}/{{.Photo.ID}}.jpg" alt="">
                     <img class="photo-main-img"
-                        alt="{{.Photo.Title.Content}} {{.Photo.Description.Content | isAltDesc}} Photo by Toomore"
+                        alt="{{.Photo.Title.Content}} Photo by Toomore"
                         src="/f/b/{{.Photo.Farm}}/{{.Photo.Server}}/{{.Photo.Secret}}/{{.Photo.ID}}.jpg">
                 </span>
             </span>
+            <span class="visually-hidden">（在 Flickr 檢視）</span>
         </a></p>
-        <p class="align-right"><small>{{.Photo.Title.Content}}</small></p>
+        <h1 class="photo-title">{{.Photo.Title.Content}}</h1>
         <p>{{.Photo.Description.Content | isHTML}}</p>
         <p class="align-center"><small>{{range .Photo.Tags.Tag }}<span>#{{.Raw}}</span> {{end}}</small></p>
-        <p class="align-center"><small>Photo by <a href="//www.flickr.com/photos/toomore/{{.Photo.ID}}">Toomore</a> / <a href="{{.Photo.License | licensesURL}}">{{.Photo.License | licensesName}}</a></small></p>
+        <p class="align-center"><small lang="en">Photo by <a href="//www.flickr.com/photos/toomore/{{.Photo.ID}}">Toomore</a> / <a href="{{.Photo.License | licensesURL}}">{{.Photo.License | licensesName}}</a></small></p>
         <p><ins class="adsbygoogle"
              style="display:block"
              data-ad-client="ca-pub-8083183430499740"
@@ -20,10 +21,10 @@
              data-ad-format="link"
              data-full-width-responsive="true"></ins></p>
         {{if and .Photo.Location.Latitude .Photo.Location.Longitude .MapboxToken}}
-        <p class="align-center"><a href="https://www.google.com/maps?q={{.Photo.Location.Latitude}},{{.Photo.Location.Longitude}}&amp;z=16"><img width="300" height="200" style="border-radius:3px;" src="/maps/{{.Photo.Location.Longitude}},{{.Photo.Location.Latitude}},16,0/300x200" alt="Map location"></a></p>
+        <p class="align-center"><a href="https://www.google.com/maps?q={{.Photo.Location.Latitude}},{{.Photo.Location.Longitude}}&amp;z=16"><img width="300" height="200" style="border-radius:3px;" src="/maps/{{.Photo.Location.Longitude}},{{.Photo.Location.Latitude}},16,0/300x200" alt="拍攝地點地圖（在 Google Maps 開啟）"></a></p>
         {{end}}
         {{if .RelatedPhotos}}
-        <p class="align-center"><small>更多同類型作品</small></p>
+        <h2 class="section-title">更多同類型作品</h2>
         <div class="related-photos" style="text-align:center;">
             {{range .RelatedPhotos}}
             {{if .Ispublic}}<a href="/p/{{.ID}}-{{.Title | replaceHover}}"><img loading="lazy" alt="{{.Title}} Photo by Toomore" src="/f/q/{{.Farm}}/{{.Server}}/{{.Secret}}/{{.ID}}.jpg"></a>{{end}}
