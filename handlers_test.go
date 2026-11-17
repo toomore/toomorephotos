@@ -241,3 +241,23 @@ func TestPhotoPageHeadingAndAlt(t *testing.T) {
 		t.Errorf("photo page missing main landmark")
 	}
 }
+
+// An untitled photo must not render an empty h1, and its alt falls back to the description.
+func TestPhotoPageUntitled(t *testing.T) {
+	a := newTestApp(t, []string{"a"})
+	var info jsonstruct.PhotosGetInfo
+	info.Common.Stat = "ok"
+	info.Photo.ID = testPhotoID
+	info.Photo.Owner.Nsid = testUserID
+	info.Photo.Description.Content = "南千住街道"
+	a.Cache.Set(context.Background(), "photo:"+testPhotoID, info, time.Hour)
+	rec := httptest.NewRecorder()
+	a.photo(rec, httptest.NewRequest("GET", "/p/"+testPhotoID, nil))
+	body := rec.Body.String()
+	if strings.Contains(body, "<h1") {
+		t.Errorf("untitled photo should not render an h1")
+	}
+	if !strings.Contains(body, `alt="南千住街道 Photo by Toomore"`) {
+		t.Errorf("untitled photo alt should fall back to description")
+	}
+}

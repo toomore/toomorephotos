@@ -4,13 +4,13 @@
                 <span class="photo-blur-inner">
                     <img class="photo-blur-placeholder" src="/f/m/{{.Photo.Farm}}/{{.Photo.Server}}/{{.Photo.Secret}}/{{.Photo.ID}}.jpg" alt="">
                     <img class="photo-main-img"
-                        alt="{{.Photo.Title.Content}} Photo by Toomore"
+                        alt="{{if .Photo.Title.Content}}{{.Photo.Title.Content}}{{else}}{{.Photo.Description.Content | isAltDesc}}{{end}} Photo by Toomore"
                         src="/f/b/{{.Photo.Farm}}/{{.Photo.Server}}/{{.Photo.Secret}}/{{.Photo.ID}}.jpg">
                 </span>
             </span>
             <span class="visually-hidden">（在 Flickr 檢視）</span>
         </a></p>
-        <h1 class="photo-title">{{.Photo.Title.Content}}</h1>
+        {{if .Photo.Title.Content}}<h1 class="photo-title">{{.Photo.Title.Content}}</h1>{{end}}
         <p>{{.Photo.Description.Content | isHTML}}</p>
         <p class="align-center"><small>{{range .Photo.Tags.Tag }}<span>#{{.Raw}}</span> {{end}}</small></p>
         <p class="align-center"><small lang="en">Photo by <a href="//www.flickr.com/photos/toomore/{{.Photo.ID}}">Toomore</a> / <a href="{{.Photo.License | licensesURL}}">{{.Photo.License | licensesName}}</a></small></p>
