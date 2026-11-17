@@ -242,10 +242,37 @@ func (a *App) sitemap(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// notFoundPage is a full HTML document (title, lang, way back home) so the
+// 404 meets WCAG 2.4.2 / 3.1.1 instead of being a bare line of text.
+const notFoundPage = `<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>找不到這張照片 - Toomore Photos</title>
+<style>
+body{margin:0;padding:48px 16px;background:#f6f6f6;color:#222;font-family:sans-serif;line-height:1.6;text-align:center}
+h1{font-size:20px;font-weight:normal;margin:0 0 8px}
+p{margin:0 0 16px}
+a{color:#1f6fb2}
+</style>
+</head>
+<body>
+<main>
+<h1>找不到這張照片</h1>
+<p lang="en">Maybe not in this timeline ... (35.701099, 139.738557)</p>
+<p><a href="/">回到 Toomore Photos 首頁</a></p>
+</main>
+</body>
+</html>
+`
+
 func (a *App) notFound(w http.ResponseWriter, r *http.Request) {
 	logs(r, "[!] Page Not Found")
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusNotFound)
-	w.Write([]byte("Maybe not in this timeline ... (35.701099, 139.738557)"))
+	w.Write([]byte(notFoundPage))
 }
 
 func (a *App) health(w http.ResponseWriter, r *http.Request) {

@@ -205,3 +205,59 @@ func TestIndexLimitsWallAndPrefetch(t *testing.T) {
 		t.Errorf("prefetch 有 %d 個, want %d", n, indexPrefetchCount)
 	}
 }
+
+// The 404 must be a real HTML page (WCAG 2.4.2 title, 3.1.1 lang) with a way home.
+func TestNotFoundIsAccessibleHTML(t *testing.T) {
+	a := newTestApp(t, []string{"a"})
+	rec := httptest.NewRecorder()
+	a.photo(rec, httptest.NewRequest("GET", "/p/notanumber", nil))
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("status = %d, want 404", rec.Code)
+	}
+	if ct := rec.Header().Get("Content-Type"); !strings.HasPrefix(ct, "text/html") {
+		t.Errorf("Content-Type = %q, want text/html", ct)
+	}
+	body := rec.Body.String()
+	for _, want := range []string{`<html lang="zh-Hant">`, "<title>", `<a href="/">`} {
+		if !strings.Contains(body, want) {
+			t.Errorf("404 body missing %q", want)
+		}
+	}
+}
+
+// Photo page keeps a single h1 (the photo title) and a short alt on the main image.
+func TestPhotoPageHeadingAndAlt(t *testing.T) {
+	a := newTestApp(t, []string{"a"})
+	rec := httptest.NewRecorder()
+	a.photo(rec, httptest.NewRequest("GET", "/p/"+testPhotoID+"-test", nil))
+	body := rec.Body.String()
+	if n := strings.Count(body, "<h1"); n != 1 {
+		t.Errorf("h1 count = %d, want 1", n)
+	}
+	if !strings.Contains(body, `alt="test Photo by Toomore"`) {
+		t.Errorf("main image alt should be title only")
+	}
+	if !strings.Contains(body, `role="main"`) {
+		t.Errorf("photo page missing main landmark")
+	}
+}
+
+// An untitled photo must not render an empty h1, and its alt falls back to the description.
+func TestPhotoPageUntitled(t *testing.T) {
+	a := newTestApp(t, []string{"a"})
+	var info jsonstruct.PhotosGetInfo
+	info.Common.Stat = "ok"
+	info.Photo.ID = testPhotoID
+	info.Photo.Owner.Nsid = testUserID
+	info.Photo.Description.Content = "南千住街道"
+	a.Cache.Set(context.Background(), "photo:"+testPhotoID, info, time.Hour)
+	rec := httptest.NewRecorder()
+	a.photo(rec, httptest.NewRequest("GET", "/p/"+testPhotoID, nil))
+	body := rec.Body.String()
+	if strings.Contains(body, "<h1") {
+		t.Errorf("untitled photo should not render an h1")
+	}
+	if !strings.Contains(body, `alt="南千住街道 Photo by Toomore"`) {
+		t.Errorf("untitled photo alt should fall back to description")
+	}
+}
